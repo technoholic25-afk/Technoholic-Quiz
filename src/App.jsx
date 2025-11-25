@@ -296,7 +296,7 @@ export default function BrainBoltQuiz() {
     
     // Email sending simulation - Replace with actual email service
     try {
-      const response = await fetch('https://formspree.io/f/YOUR_FORM_ID', {
+      const response = await fetch('https://formspree.io/f/xovzndal', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
