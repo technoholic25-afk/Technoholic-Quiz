@@ -13,7 +13,7 @@ const CONFIG = {
   QUIZ_END_DATE: '2025-11-30', // Format: YYYY-MM-DD
   
   // Google Sheets Integration (Google Apps Script URL)
-  GOOGLE_SHEET_URL: 'https://script.google.com/macros/s/AKfycbw1ndVJ5Bmb6rCoYh0eHxSwezzPQf6_UF_v8tCINehhYYBQ7GlAyALDaykQNoQcDsnP/exec',
+  GOOGLE_SHEET_URL: 'https://script.google.com/macros/s/AKfycbzo8SaoibMbaDCHegA3YzN5qOPiJaPZJj7v5_GsZ6ueJMU_faENahRxBhe5q5976Ksu/exec',
   
   // Formspree Integration
   // Web3forms Integration (replace with your access key)
