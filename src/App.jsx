@@ -8,15 +8,20 @@ const CONFIG = {
   // Quiz Start Time (24-hour format: HH:MM)
   QUIZ_START_TIME: '10:36', // Example: 2:00 PM
   QUIZ_START_DATE: '2025-11-29', // Format: YYYY-MM-DD
+  // Quiz End Time - after this datetime site will stop accepting responses
+  QUIZ_END_TIME: '11:30', // 24-hour format HH:MM
+  QUIZ_END_DATE: '2025-11-29', // Format: YYYY-MM-DD
   
   // Google Sheets Integration (Google Apps Script URL)
   GOOGLE_SHEET_URL: 'https://script.google.com/macros/s/AKfycbw1ndVJ5Bmb6rCoYh0eHxSwezzPQf6_UF_v8tCINehhYYBQ7GlAyALDaykQNoQcDsnP/exec',
   
   // Formspree Integration
-  FORMSPREE_ID: 'xovzndal', // Your Formspree form ID
+  // Web3forms Integration (replace with your access key)
+  WEB3FORMS_ACCESS_KEY: 'c3ccd999-fdc3-49b1-a3b9-87e95da597fa',
+  FORMSPREE_ID: 'xovzndal', // (unused) previous Formspree ID
   
   // Quiz Settings
-  TIME_PER_QUESTION: 10, // seconds
+  TIME_PER_QUESTION: 15, // seconds
   PASSING_PERCENTAGE: 50
 };
 
@@ -59,7 +64,7 @@ const QUIZ_QUESTIONS = [
 
 const RULES = [
   "Quiz will start automatically at the scheduled time",
-  "Each question has a 10-second timer",
+  "Each question has a 15-second timer",
   "Questions will automatically advance when time expires",
   "You cannot go back to previous questions",
   "Each correct answer earns 1 point",
@@ -87,38 +92,64 @@ export default function BrainBoltQuiz() {
   const [quizTerminated, setQuizTerminated] = useState(false);
   const [timeUntilStart, setTimeUntilStart] = useState('');
   const [canStartQuiz, setCanStartQuiz] = useState(false);
+  const [quizEnded, setQuizEnded] = useState(false);
   
   const visibilityRef = useRef(true);
 
-  // Check if quiz time has arrived
+  // Check start and end times for the quiz
   useEffect(() => {
-    const checkQuizTime = () => {
+    const checkQuizTimes = () => {
       const now = new Date();
-      const [hours, minutes] = CONFIG.QUIZ_START_TIME.split(':');
+
+      // build start datetime
+      const [sh, sm] = CONFIG.QUIZ_START_TIME.split(':');
       const quizStart = new Date(CONFIG.QUIZ_START_DATE);
-      quizStart.setHours(parseInt(hours), parseInt(minutes), 0, 0);
-      
+      quizStart.setHours(parseInt(sh, 10), parseInt(sm, 10), 0, 0);
+
+      // build end datetime
+      const [eh, em] = CONFIG.QUIZ_END_TIME.split(':');
+      const quizEnd = new Date(CONFIG.QUIZ_END_DATE);
+      quizEnd.setHours(parseInt(eh, 10), parseInt(em, 10), 0, 0);
+
+      if (now >= quizEnd) {
+        // Quiz period is over
+        setQuizEnded(true);
+        setCanStartQuiz(false);
+        setTimeUntilStart('Quiz ended');
+        // If someone is mid-quiz, auto-submit and move to results
+        if (stage === 'quiz' && !quizTerminated) {
+          setQuizTerminated(true);
+          submitQuizResults(score, false);
+          setStage('results');
+        }
+        return;
+      }
+
+      // Not yet ended
+      setQuizEnded(false);
+
       if (now >= quizStart) {
         setCanStartQuiz(true);
         setTimeUntilStart('');
       } else {
+        setCanStartQuiz(false);
         const diff = quizStart - now;
         const days = Math.floor(diff / (1000 * 60 * 60 * 24));
         const hrs = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
         const mins = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
         const secs = Math.floor((diff % (1000 * 60)) / 1000);
-        
+
         let timeString = '';
         if (days > 0) timeString += `${days}d `;
         timeString += `${hrs}h ${mins}m ${secs}s`;
         setTimeUntilStart(timeString);
       }
     };
-    
-    checkQuizTime();
-    const interval = setInterval(checkQuizTime, 1000);
+
+    checkQuizTimes();
+    const interval = setInterval(checkQuizTimes, 1000);
     return () => clearInterval(interval);
-  }, []);
+  }, [stage, score, quizTerminated]);
 
   // Tab switch detection
   useEffect(() => {
@@ -198,11 +229,16 @@ export default function BrainBoltQuiz() {
       return;
     }
 
+    if (quizEnded) {
+      alert('The quiz has already ended and registration is closed.');
+      return;
+    }
+
     setStage('rules');
   };
 
   const handleAnswer = (answer) => {
-    if (showFeedback || quizTerminated) return;
+    if (showFeedback || quizTerminated || quizEnded) return;
 
     const question = QUIZ_QUESTIONS[currentQuestion];
     const isCorrect = question.type === 'boolean' 
@@ -279,58 +315,41 @@ export default function BrainBoltQuiz() {
       console.error('❌ Google Sheets error:', error);
     }
 
-    // Send Email via Formspree
+    // Send Email via Web3forms (replacing Formspree)
     try {
-      const response = await fetch(`https://formspree.io/f/${CONFIG.FORMSPREE_ID}`, {
+      const response = await fetch('https://api.web3forms.com/submit', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          _subject: `Quiz Score: ${participant.name} - ${finalScore}/${QUIZ_QUESTIONS.length}`,
-          _replyto: participant.email,
-          message: `
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-   TECHNOHOLIC 2025 - BRAIN BOLT
-   Quiz Submission Report
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-PARTICIPANT: ${participant.name}
-SCORE: ${finalScore}/${QUIZ_QUESTIONS.length} (${percentage}%)
-
-Contact Information:
--------------------
-Email: ${participant.email}
-Phone: ${participant.phone}
-College: ${participant.college}
-
-Quiz Status: ${terminated ? '⚠ TERMINATED (Tab Switch)' : '✅ COMPLETED'}
-Submission Time: ${timestamp}
-
-Performance Summary:
-------------------
-Correct Answers: ${finalScore}
-Incorrect: ${QUIZ_QUESTIONS.length - finalScore}
-Total Questions: ${QUIZ_QUESTIONS.length}
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-          `,
-          Participant_Name: participant.name,
-          Email: participant.email,
-          Phone: participant.phone,
-          College: participant.college,
-          Score: `${finalScore}/${QUIZ_QUESTIONS.length}`,
-          Percentage: `${percentage}%`,
-          Status: terminated ? 'TERMINATED' : 'COMPLETED'
+          access_key: CONFIG.WEB3FORMS_ACCESS_KEY,
+          subject: `Brain Bolt Quiz Results - ${participant.name}`,
+          from_name: 'Technoholic 2025',
+          name: participant.name,
+          email: participant.email,
+          message: `\nQuiz Results:\n--------------\nParticipant Name: ${participant.name}\nCollege: ${participant.college}\nEmail: ${participant.email}\nPhone: ${participant.phone}\nScore: ${finalScore}/${QUIZ_QUESTIONS.length}\nPercentage: ${percentage}%\nStatus: ${terminated ? 'TERMINATED' : 'COMPLETED'}\nSubmitted At: ${timestamp}\n`,
         })
       });
-      
+
       if (response.ok) {
         setEmailSent(true);
-        console.log('✅ Email sent successfully');
+        console.log('Email sent successfully via Web3forms');
+      } else {
+        // Try to read response body for debugging (may be JSON or text)
+        let details = '';
+        try {
+          details = await response.text();
+          console.warn('Web3forms response status:', response.status, 'body:', details);
+        } catch (e) {
+          console.warn('Web3forms response status:', response.status, 'and could not read body');
+        }
+        // Inform the user in UI (brief)
+        alert(`Failed to send confirmation email (status ${response.status}). Check console for details.`);
       }
     } catch (error) {
-      console.error('❌ Email error:', error);
+      console.error('Web3forms email error:', error);
+      alert('Failed to send confirmation email. Check console for details.');
     }
   };
 
@@ -340,10 +359,10 @@ Total Questions: ${QUIZ_QUESTIONS.length}
       <div className="min-h-screen bg-gradient-to-br from-blue-600 to-purple-700 flex items-center justify-center p-4">
         <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-2xl w-full text-center">
           <Trophy className="w-20 h-20 text-yellow-500 mx-auto mb-4" />
-          <h1 className="text-4xl font-bold text-gray-800 mb-2">KBP College, Thane presents</h1>
-          <h2 className="text-5xl font-extrabold text-blue-600 mb-4">Technoholic 2025</h2>
+          <h1 className="text-2xl sm:text-4xl font-bold text-gray-800 mb-2">KBP College, Thane presents</h1>
+          <h2 className="text-3xl sm:text-5xl font-extrabold text-blue-600 mb-4">Technoholic 2025</h2>
           <div className="bg-gradient-to-r from-purple-500 to-pink-500 text-white py-4 px-6 rounded-xl mb-6">
-            <h3 className="text-3xl font-bold">"Brain Bolt" Quiz Competition</h3>
+            <h3 className="text-xl sm:text-3xl font-bold">"Brain Bolt" Quiz Competition</h3>
           </div>
           <p className="text-xl text-gray-600 mb-8">Digital Civics Challenge</p>
           
@@ -353,14 +372,16 @@ Total Questions: ${QUIZ_QUESTIONS.length}
               <p className="text-lg font-semibold text-yellow-800 mb-2">Quiz starts in:</p>
               <p className="text-3xl font-bold text-yellow-900">{timeUntilStart}</p>
               <p className="text-sm text-yellow-700 mt-2">Scheduled: {CONFIG.QUIZ_START_DATE} at {CONFIG.QUIZ_START_TIME}</p>
+              <p className="text-sm text-yellow-700 mt-1">Ends: {CONFIG.QUIZ_END_DATE} at {CONFIG.QUIZ_END_TIME}</p>
             </div>
           )}
           
           <button
-            onClick={() => setStage('registration')}
-            className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 px-8 rounded-lg text-xl transition transform hover:scale-105"
+            onClick={() => { if (!quizEnded) setStage('registration'); }}
+            disabled={quizEnded}
+            className={`${quizEnded ? 'bg-gray-400 text-gray-200 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700 text-white'} font-bold py-4 px-8 rounded-lg text-xl transition transform hover:scale-105`}
           >
-            {canStartQuiz ? 'Start Registration' : 'Register Now (Quiz starts later)'}
+            {quizEnded ? 'Quiz Ended' : (canStartQuiz ? 'Start Registration' : 'Register Now (Quiz starts later)')}
           </button>
         </div>
       </div>
@@ -372,7 +393,7 @@ Total Questions: ${QUIZ_QUESTIONS.length}
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-600 to-purple-700 flex items-center justify-center p-4">
         <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full">
-          <h2 className="text-3xl font-bold text-gray-800 mb-6 text-center">Participant Registration</h2>
+          <h2 className="text-2xl sm:text-3xl font-bold text-gray-800 mb-6 text-center">Participant Registration</h2>
           <div className="space-y-4">
             <div>
               <label className="flex items-center text-gray-700 font-semibold mb-2">
@@ -452,13 +473,15 @@ Total Questions: ${QUIZ_QUESTIONS.length}
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-600 to-purple-700 flex items-center justify-center p-4">
         <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-2xl w-full">
-          <h2 className="text-3xl font-bold text-gray-800 mb-6 text-center">Quiz Rules</h2>
+          <h2 className="text-2xl sm:text-3xl font-bold text-gray-800 mb-6 text-center">Quiz Rules</h2>
           
           {!canStartQuiz && (
             <div className="bg-yellow-50 border-2 border-yellow-400 rounded-lg p-4 mb-6 text-center">
               <Clock className="w-10 h-10 text-yellow-600 mx-auto mb-2" />
               <p className="text-lg font-semibold text-yellow-800">Quiz will start automatically in:</p>
               <p className="text-2xl font-bold text-yellow-900 mt-2">{timeUntilStart}</p>
+              <p className="text-sm text-yellow-700 mt-2">Scheduled: {CONFIG.QUIZ_START_DATE} at {CONFIG.QUIZ_START_TIME}</p>
+              <p className="text-sm text-yellow-700 mt-1">Ends: {CONFIG.QUIZ_END_DATE} at {CONFIG.QUIZ_END_TIME}</p>
             </div>
           )}
           
@@ -478,15 +501,15 @@ Total Questions: ${QUIZ_QUESTIONS.length}
           </div>
           
           <button
-            onClick={() => canStartQuiz && setStage('quiz')}
-            disabled={!canStartQuiz}
+            onClick={() => (canStartQuiz && !quizEnded) && setStage('quiz')}
+            disabled={!canStartQuiz || quizEnded}
             className={`w-full font-bold py-4 rounded-lg text-xl transition transform ${
-              canStartQuiz
+              (canStartQuiz && !quizEnded)
                 ? 'bg-green-600 hover:bg-green-700 text-white hover:scale-105'
                 : 'bg-gray-400 text-gray-200 cursor-not-allowed'
             }`}
           >
-            {canStartQuiz ? 'I Understand - Start Quiz' : 'Waiting for Quiz Time...'}
+            {quizEnded ? 'Quiz Ended' : (canStartQuiz ? 'I Understand - Start Quiz' : 'Waiting for Quiz Time...')}
           </button>
         </div>
       </div>
@@ -607,12 +630,12 @@ Total Questions: ${QUIZ_QUESTIONS.length}
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-600 to-purple-700 flex items-center justify-center p-4">
         <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-2xl w-full text-center">
-          <div className="text-6xl font-extrabold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-6">
+          <div className="text-4xl sm:text-6xl font-extrabold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-6">
             TECHNOHOLIC
           </div>
 
           <Trophy className="w-24 h-24 mx-auto mb-4 text-blue-500" />
-          <h2 className="text-4xl font-bold text-gray-800 mb-4">Response Submitted!</h2>
+          <h2 className="text-2xl sm:text-4xl font-bold text-gray-800 mb-4">Response Submitted!</h2>
           
           <div className="bg-gradient-to-r from-blue-500 to-purple-500 text-white py-8 px-6 rounded-xl mb-6">
             <CheckCircle className="w-16 h-16 mx-auto mb-4" />
