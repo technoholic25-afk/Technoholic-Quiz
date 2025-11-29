@@ -9,7 +9,7 @@ const CONFIG = {
   QUIZ_START_TIME: '10:36', // Example: 2:00 PM
   QUIZ_START_DATE: '2025-11-29', // Format: YYYY-MM-DD
   // Quiz End Time - after this datetime site will stop accepting responses
-  QUIZ_END_TIME: '11:30', // 24-hour format HH:MM
+  QUIZ_END_TIME: '11:40', // 24-hour format HH:MM
   QUIZ_END_DATE: '2025-11-29', // Format: YYYY-MM-DD
   
   // Google Sheets Integration (Google Apps Script URL)
