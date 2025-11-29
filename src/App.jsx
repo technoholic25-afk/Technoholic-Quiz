@@ -6,7 +6,7 @@ import { Clock, CheckCircle, XCircle, Trophy, Mail, User, Building, Phone, Alert
 // ============================================
 const CONFIG = {
   // Quiz Start Time (24-hour format: HH:MM)
-  QUIZ_START_TIME: '10:31', // Example: 2:00 PM
+  QUIZ_START_TIME: '10:36', // Example: 2:00 PM
   QUIZ_START_DATE: '2025-11-29', // Format: YYYY-MM-DD
   
   // Google Sheets Integration (Google Apps Script URL)
