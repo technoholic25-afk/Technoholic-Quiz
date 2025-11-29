@@ -10,7 +10,7 @@ const CONFIG = {
   QUIZ_START_DATE: '2025-11-29', // Format: YYYY-MM-DD
   // Quiz End Time - after this datetime site will stop accepting responses
   QUIZ_END_TIME: '11:40', // 24-hour format HH:MM
-  QUIZ_END_DATE: '2025-11-29', // Format: YYYY-MM-DD
+  QUIZ_END_DATE: '2025-11-30', // Format: YYYY-MM-DD
   
   // Google Sheets Integration (Google Apps Script URL)
   GOOGLE_SHEET_URL: 'https://script.google.com/macros/s/AKfycbw1ndVJ5Bmb6rCoYh0eHxSwezzPQf6_UF_v8tCINehhYYBQ7GlAyALDaykQNoQcDsnP/exec',
@@ -93,6 +93,7 @@ export default function BrainBoltQuiz() {
   const [timeUntilStart, setTimeUntilStart] = useState('');
   const [canStartQuiz, setCanStartQuiz] = useState(false);
   const [quizEnded, setQuizEnded] = useState(false);
+  const [registeredEmails, setRegisteredEmails] = useState(new Set());
   
   const visibilityRef = useRef(true);
 
@@ -234,6 +235,14 @@ export default function BrainBoltQuiz() {
       return;
     }
 
+    // Check if email is already registered
+    if (registeredEmails.has(participant.email.toLowerCase())) {
+      alert('This email has already been registered. You cannot register twice.');
+      return;
+    }
+
+    // Mark this email as registered and proceed
+    setRegisteredEmails(prev => new Set(prev).add(participant.email.toLowerCase()));
     setStage('rules');
   };
 
