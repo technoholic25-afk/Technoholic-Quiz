@@ -10,7 +10,7 @@ const CONFIG = {
   QUIZ_START_DATE: '2025-11-29', // Format: YYYY-MM-DD
   // Quiz End Time - after this datetime site will stop accepting responses
   QUIZ_END_TIME: '11:40', // 24-hour format HH:MM
-  QUIZ_END_DATE: '2025-11-30', // Format: YYYY-MM-DD
+  QUIZ_END_DATE: '2025-12-01', // Format: YYYY-MM-DD
   
   // Google Sheets Integration (Google Apps Script URL)
   GOOGLE_SHEET_URL: 'https://script.google.com/macros/s/AKfycbzo8SaoibMbaDCHegA3YzN5qOPiJaPZJj7v5_GsZ6ueJMU_faENahRxBhe5q5976Ksu/exec',
@@ -94,8 +94,72 @@ export default function BrainBoltQuiz() {
   const [canStartQuiz, setCanStartQuiz] = useState(false);
   const [quizEnded, setQuizEnded] = useState(false);
   const [registeredEmails, setRegisteredEmails] = useState(new Set());
+  const [alreadyCompleted, setAlreadyCompleted] = useState(false);
   
   const visibilityRef = useRef(true);
+  const submissionLock = useRef(false);
+
+  // Load registered and completed emails from localStorage on mount
+  useEffect(() => {
+    try {
+      const savedRegistered = localStorage.getItem('registeredEmails');
+      if (savedRegistered) {
+        const arr = JSON.parse(savedRegistered);
+        setRegisteredEmails(new Set(arr.map(e => e.toLowerCase())));
+      }
+
+      const savedCompleted = localStorage.getItem('completedEmails');
+      if (savedCompleted) {
+        const arr = JSON.parse(savedCompleted);
+        // If current email is in completed list, show already completed message
+        const emails = arr.map(e => e.toLowerCase());
+      }
+    } catch (e) {
+      console.warn('Failed to load emails from localStorage', e);
+    }
+  }, []);
+
+  // Save registered email
+  const saveRegisteredEmail = (email) => {
+    if (!email) return;
+    try {
+      const emailLower = email.toLowerCase();
+      const current = JSON.parse(localStorage.getItem('registeredEmails') || '[]');
+      if (!current.includes(emailLower)) {
+        current.push(emailLower);
+        localStorage.setItem('registeredEmails', JSON.stringify(current));
+      }
+      setRegisteredEmails(prev => new Set(prev).add(emailLower));
+    } catch (e) {
+      console.warn('Could not save registeredEmails to localStorage', e);
+    }
+  };
+
+  // Save completed email (after successful submission)
+  const saveCompletedEmail = (email) => {
+    if (!email) return;
+    try {
+      const emailLower = email.toLowerCase();
+      const current = JSON.parse(localStorage.getItem('completedEmails') || '[]');
+      if (!current.includes(emailLower)) {
+        current.push(emailLower);
+        localStorage.setItem('completedEmails', JSON.stringify(current));
+      }
+    } catch (e) {
+      console.warn('Could not save completedEmails to localStorage', e);
+    }
+  };
+
+  // Check if email already completed quiz
+  const isEmailCompleted = (email) => {
+    if (!email) return false;
+    try {
+      const completed = JSON.parse(localStorage.getItem('completedEmails') || '[]');
+      return completed.map(e => e.toLowerCase()).includes(email.toLowerCase());
+    } catch (e) {
+      return false;
+    }
+  };
 
   // Check start and end times for the quiz
   useEffect(() => {
@@ -155,14 +219,14 @@ export default function BrainBoltQuiz() {
   // Tab switch detection
   useEffect(() => {
     const handleVisibilityChange = () => {
-      if (document.hidden && stage === 'quiz') {
+      if (document.hidden && stage === 'quiz' && !quizTerminated) {
         setQuizTerminated(true);
         submitQuizResults(score, true);
       }
     };
 
     const handleBlur = () => {
-      if (stage === 'quiz') {
+      if (stage === 'quiz' && !quizTerminated) {
         visibilityRef.current = false;
         setTimeout(() => {
           if (!visibilityRef.current) {
@@ -186,7 +250,7 @@ export default function BrainBoltQuiz() {
       window.removeEventListener('blur', handleBlur);
       window.removeEventListener('focus', handleFocus);
     };
-  }, [stage, score]);
+  }, [stage, score, quizTerminated]);
 
   // Timer logic
   useEffect(() => {
@@ -235,14 +299,23 @@ export default function BrainBoltQuiz() {
       return;
     }
 
+    const emailLower = participant.email.toLowerCase();
+
+    // Check if email already completed the quiz
+    if (isEmailCompleted(emailLower)) {
+      alert('This email has already completed the quiz. You cannot take it again.');
+      setAlreadyCompleted(true);
+      return;
+    }
+
     // Check if email is already registered
-    if (registeredEmails.has(participant.email.toLowerCase())) {
+    if (registeredEmails.has(emailLower)) {
       alert('This email has already been registered. You cannot register twice.');
       return;
     }
 
     // Mark this email as registered and proceed
-    setRegisteredEmails(prev => new Set(prev).add(participant.email.toLowerCase()));
+    saveRegisteredEmail(emailLower);
     setStage('rules');
   };
 
@@ -281,6 +354,14 @@ export default function BrainBoltQuiz() {
   };
 
   const submitQuizResults = async (finalScore, terminated = false) => {
+    // Prevent duplicate submissions
+    if (submissionLock.current) {
+      console.warn('Submission already in progress. Skipping duplicate submission.');
+      return;
+    }
+
+    submissionLock.current = true;
+
     const percentage = ((finalScore / QUIZ_QUESTIONS.length) * 100).toFixed(2);
     const timestamp = new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' });
     
@@ -320,6 +401,9 @@ export default function BrainBoltQuiz() {
       });
       
       console.log('✅ Data sent to Google Sheets');
+      
+      // Mark email as completed only after successful submission
+      saveCompletedEmail(participant.email);
     } catch (error) {
       console.error('❌ Google Sheets error:', error);
     }
@@ -361,6 +445,30 @@ export default function BrainBoltQuiz() {
       alert('Failed to send confirmation email. Check console for details.');
     }
   };
+
+  // Already Completed Screen
+  if (alreadyCompleted) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-600 to-purple-700 flex items-center justify-center p-4">
+        <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-2xl w-full text-center">
+          <AlertTriangle className="w-24 h-24 text-yellow-500 mx-auto mb-4" />
+          <h2 className="text-4xl font-bold text-yellow-600 mb-4">Already Participated!</h2>
+          <p className="text-xl text-gray-700 mb-6">
+            This email address has already completed the quiz.
+          </p>
+          <div className="bg-yellow-50 border-2 border-yellow-300 rounded-lg p-6 mb-6">
+            <p className="text-lg text-yellow-800 font-semibold">
+              You can only participate once in this quiz.
+            </p>
+            <p className="text-sm text-yellow-700 mt-2">
+              If you believe this is an error, please contact the organizers.
+            </p>
+          </div>
+          
+        </div>
+      </div>
+    );
+  }
 
   // Welcome Screen
   if (stage === 'welcome') {
