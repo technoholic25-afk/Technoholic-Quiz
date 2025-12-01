@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Clock, CheckCircle, XCircle, Trophy, Mail, User, Building, Phone, AlertTriangle } from 'lucide-react';
+import { Clock, CheckCircle, Trophy, Mail, User, Building, Phone, AlertTriangle } from 'lucide-react';
 
 // ============================================
 // CONFIGURATION - CHANGE THESE SETTINGS
@@ -15,14 +15,11 @@ const CONFIG = {
   // Google Sheets Integration (Google Apps Script URL)
   GOOGLE_SHEET_URL: 'https://script.google.com/macros/s/AKfycbzX6n4pnfJ9mZQ5w8gD7rSD2fHwTeKVU07teOuXL3hBEBLz25cmIoVBHI9-KZs35EjV/exec',
   
-  // Formspree Integration
-  // Web3forms Integration (replace with your access key)
- // WEB3FORMS_ACCESS_KEY: 'c3ccd999-fdc3-49b1-a3b9-87e95da597fa',
-  FORMSPREE_ID: 'xovzndal', // (unused) previous Formspree ID
+  // Web3forms Integration (keep your access key)
+  WEB3FORMS_ACCESS_KEY: 'c3ccd999-fdc3-49b1-a3b9-87e95da597fa',
   
   // Quiz Settings
-  TIME_PER_QUESTION: 15, // seconds
-  PASSING_PERCENTAGE: 50
+  TIME_PER_QUESTION: 15 // seconds
 };
 
 // Quiz Questions
@@ -377,14 +374,10 @@ export default function BrainBoltQuiz() {
     
     // Calculate duration in seconds
     let durationSeconds = 0;
-    let durationDisplay = '0s';
     let startTimestamp = 'N/A';
 
     if (quizStartTime) {
       durationSeconds = Math.floor((quizEndTime - quizStartTime) / 1000);
-      const minutes = Math.floor(durationSeconds / 60);
-      const seconds = durationSeconds % 60;
-      durationDisplay = minutes > 0 ? `${minutes}m ${seconds}s` : `${seconds}s`;
       startTimestamp = quizStartTime.toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' });
     }
     
@@ -399,7 +392,6 @@ export default function BrainBoltQuiz() {
       status: terminated ? 'TERMINATED' : 'COMPLETED',
       startTime: startTimestamp,
       endTime: endTimestamp,
-      duration: durationDisplay,
       durationSeconds: durationSeconds
     };
 
@@ -412,9 +404,10 @@ export default function BrainBoltQuiz() {
         data: resultData
       });
 
-      console.log('Payload being sent:', payload);
+      console.log('Payload being sent to Google Sheets:', payload);
 
-      const response = await fetch(CONFIG.GOOGLE_SHEET_URL, {
+      // keep this if your Apps Script requires no-cors (it will be opaque)
+      await fetch(CONFIG.GOOGLE_SHEET_URL, {
         method: 'POST',
         mode: 'no-cors',
         headers: {
@@ -423,15 +416,50 @@ export default function BrainBoltQuiz() {
         body: payload
       });
       
-      console.log('✅ Fetch request completed with status:', response.status);
       console.log('✅ Data sent to Google Sheets');
-      
-      // Mark email as completed only after fetch completes
+
+      // --- NEW: Send email via Web3Forms ---
+      // Web3Forms requires a POST to https://api.web3forms.com/submit with access_key
+      try {
+        const web3Payload = {
+          access_key: CONFIG.WEB3FORMS_ACCESS_KEY,
+          subject: `Quiz submission — ${participant.name}`,
+          name: participant.name,
+          email: participant.email,
+          phone: participant.phone,
+          // Put useful details in the message
+          message: `Name: ${participant.name}
+College: ${participant.college}
+Email: ${participant.email}
+Phone: ${participant.phone}
+Score: ${finalScore}/${QUIZ_QUESTIONS.length}
+Percentage: ${percentage}%
+Status: ${resultData.status}
+Start: ${resultData.startTime}
+End: ${resultData.endTime}
+Duration (s): ${resultData.durationSeconds}`
+        };
+
+        const web3Resp = await fetch('https://api.web3forms.com/submit', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          // IMPORTANT: do NOT use mode: 'no-cors' here — you want real response/errors
+          body: JSON.stringify(web3Payload)
+        });
+
+        const web3Json = await web3Resp.json();
+        console.log('Web3Forms response:', web3Json);
+      } catch (web3Err) {
+        console.warn('Web3Forms error:', web3Err);
+      }
+
+      // Mark email as completed only after attempts complete
       saveCompletedEmail(participant.email);
       setEmailSent(true);
     } catch (error) {
       console.error('❌ Google Sheets error:', error);
-      console.error('Error details:', error.message);
+    } finally {
+      submissionLock.current = false;
     }
   };
 
