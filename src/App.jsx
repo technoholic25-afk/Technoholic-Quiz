@@ -10,14 +10,14 @@ const CONFIG = {
   QUIZ_START_DATE: '2025-11-29', // Format: YYYY-MM-DD
   // Quiz End Time - after this datetime site will stop accepting responses
   QUIZ_END_TIME: '11:40', // 24-hour format HH:MM
-  QUIZ_END_DATE: '2025-12-01', // Format: YYYY-MM-DD
+  QUIZ_END_DATE: '2025-12-09', // Format: YYYY-MM-DD
   
   // Google Sheets Integration (Google Apps Script URL)
-  GOOGLE_SHEET_URL: 'https://script.google.com/macros/s/AKfycbzo8SaoibMbaDCHegA3YzN5qOPiJaPZJj7v5_GsZ6ueJMU_faENahRxBhe5q5976Ksu/exec',
+  GOOGLE_SHEET_URL: 'https://script.google.com/macros/s/AKfycbzX6n4pnfJ9mZQ5w8gD7rSD2fHwTeKVU07teOuXL3hBEBLz25cmIoVBHI9-KZs35EjV/exec',
   
   // Formspree Integration
   // Web3forms Integration (replace with your access key)
-  WEB3FORMS_ACCESS_KEY: 'c3ccd999-fdc3-49b1-a3b9-87e95da597fa',
+ // WEB3FORMS_ACCESS_KEY: 'c3ccd999-fdc3-49b1-a3b9-87e95da597fa',
   FORMSPREE_ID: 'xovzndal', // (unused) previous Formspree ID
   
   // Quiz Settings
@@ -95,6 +95,7 @@ export default function BrainBoltQuiz() {
   const [quizEnded, setQuizEnded] = useState(false);
   const [registeredEmails, setRegisteredEmails] = useState(new Set());
   const [alreadyCompleted, setAlreadyCompleted] = useState(false);
+  const [quizStartTime, setQuizStartTime] = useState(null);
   
   const visibilityRef = useRef(true);
   const submissionLock = useRef(false);
@@ -262,6 +263,14 @@ export default function BrainBoltQuiz() {
     }
   }, [timeLeft, stage, showFeedback, quizTerminated]);
 
+  // Set quiz start time when entering quiz stage (MOVED HERE)
+  useEffect(() => {
+    if (stage === 'quiz' && !quizStartTime) {
+      setQuizStartTime(new Date());
+      console.log('Quiz started at:', new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' }));
+    }
+  }, [stage, quizStartTime]);
+
   const handleRegistration = () => {
     // Validate all fields are filled
     if (!participant.name || !participant.college || !participant.email || !participant.phone) {
@@ -363,7 +372,21 @@ export default function BrainBoltQuiz() {
     submissionLock.current = true;
 
     const percentage = ((finalScore / QUIZ_QUESTIONS.length) * 100).toFixed(2);
-    const timestamp = new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' });
+    const quizEndTime = new Date();
+    const endTimestamp = quizEndTime.toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' });
+    
+    // Calculate duration in seconds
+    let durationSeconds = 0;
+    let durationDisplay = '0s';
+    let startTimestamp = 'N/A';
+
+    if (quizStartTime) {
+      durationSeconds = Math.floor((quizEndTime - quizStartTime) / 1000);
+      const minutes = Math.floor(durationSeconds / 60);
+      const seconds = durationSeconds % 60;
+      durationDisplay = minutes > 0 ? `${minutes}m ${seconds}s` : `${seconds}s`;
+      startTimestamp = quizStartTime.toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' });
+    }
     
     const resultData = {
       name: participant.name,
@@ -374,75 +397,41 @@ export default function BrainBoltQuiz() {
       total: QUIZ_QUESTIONS.length,
       percentage: percentage,
       status: terminated ? 'TERMINATED' : 'COMPLETED',
-      timestamp: timestamp
+      startTime: startTimestamp,
+      endTime: endTimestamp,
+      duration: durationDisplay,
+      durationSeconds: durationSeconds
     };
 
     console.log('Submitting results:', resultData);
 
     // Send to Google Sheets
     try {
+      const payload = JSON.stringify({
+        action: 'addResult',
+        data: resultData
+      });
+
+      console.log('Payload being sent:', payload);
+
       const response = await fetch(CONFIG.GOOGLE_SHEET_URL, {
         method: 'POST',
         mode: 'no-cors',
-        body: JSON.stringify({
-          action: 'addResult',
-          data: {
-            name: participant.name,
-            college: participant.college,
-            email: participant.email,
-            phone: participant.phone,
-            score: finalScore,
-            total: QUIZ_QUESTIONS.length,
-            percentage: percentage,
-            status: terminated ? 'TERMINATED' : 'COMPLETED',
-            timestamp: timestamp
-          }
-        })
-      });
-      
-      console.log('✅ Data sent to Google Sheets');
-      
-      // Mark email as completed only after successful submission
-      saveCompletedEmail(participant.email);
-    } catch (error) {
-      console.error('❌ Google Sheets error:', error);
-    }
-
-    // Send Email via Web3forms (replacing Formspree)
-    try {
-      const response = await fetch('https://api.web3forms.com/submit', {
-        method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({
-          access_key: CONFIG.WEB3FORMS_ACCESS_KEY,
-          subject: `Brain Bolt Quiz Results - ${participant.name}`,
-          from_name: 'Technoholic 2025',
-          name: participant.name,
-          email: participant.email,
-          message: `\nQuiz Results:\n--------------\nParticipant Name: ${participant.name}\nCollege: ${participant.college}\nEmail: ${participant.email}\nPhone: ${participant.phone}\nScore: ${finalScore}/${QUIZ_QUESTIONS.length}\nPercentage: ${percentage}%\nStatus: ${terminated ? 'TERMINATED' : 'COMPLETED'}\nSubmitted At: ${timestamp}\n`,
-        })
+        body: payload
       });
-
-      if (response.ok) {
-        setEmailSent(true);
-        console.log('Email sent successfully via Web3forms');
-      } else {
-        // Try to read response body for debugging (may be JSON or text)
-        let details = '';
-        try {
-          details = await response.text();
-          console.warn('Web3forms response status:', response.status, 'body:', details);
-        } catch (e) {
-          console.warn('Web3forms response status:', response.status, 'and could not read body');
-        }
-        // Inform the user in UI (brief)
-        alert(`Failed to send confirmation email (status ${response.status}). Check console for details.`);
-      }
+      
+      console.log('✅ Fetch request completed with status:', response.status);
+      console.log('✅ Data sent to Google Sheets');
+      
+      // Mark email as completed only after fetch completes
+      saveCompletedEmail(participant.email);
+      setEmailSent(true);
     } catch (error) {
-      console.error('Web3forms email error:', error);
-      alert('Failed to send confirmation email. Check console for details.');
+      console.error('❌ Google Sheets error:', error);
+      console.error('Error details:', error.message);
     }
   };
 
