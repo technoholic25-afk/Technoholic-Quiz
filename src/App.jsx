@@ -16,7 +16,7 @@ const CONFIG = {
   GOOGLE_SHEET_URL: 'https://script.google.com/macros/s/AKfycbzX6n4pnfJ9mZQ5w8gD7rSD2fHwTeKVU07teOuXL3hBEBLz25cmIoVBHI9-KZs35EjV/exec',
   
   // Web3forms Integration (keep your access key)
-  WEB3FORMS_ACCESS_KEY: 'c3ccd999-fdc3-49b1-a3b9-87e95da597fa',
+ // WEB3FORMS_ACCESS_KEY: 'c3ccd999-fdc3-49b1-a3b9-87e95da597fa',
   
   // Quiz Settings
   TIME_PER_QUESTION: 15 // seconds
@@ -24,39 +24,36 @@ const CONFIG = {
 
 // Quiz Questions
 const QUIZ_QUESTIONS = [
-  {
-    id: 1,
-    question: "What is a digital footprint?",
-    type: "multiple",
-    options: ["Physical footprint on device", "Trail of data left online", "Computer memory", "Internet speed"],
-    correct: 1
-  },
-  {
-    id: 2,
-    question: "Phishing is a type of cyber attack that uses fake emails to steal information.",
-    type: "boolean",
-    correct: true
-  },
-  {
-    id: 3,
-    question: "What does HTTPS stand for?",
-    type: "multiple",
-    options: ["Hyper Text Transfer Protocol Secure", "High Tech Transfer Protection System", "Hyper Transfer Text Protocol Safe", "Home Text Transfer Protocol"],
-    correct: 0
-  },
-  {
-    id: 4,
-    question: "Two-factor authentication makes your account less secure.",
-    type: "boolean",
-    correct: false
-  },
-  {
-    id: 5,
-    question: "What is malware?",
-    type: "multiple",
-    options: ["Good software", "Malicious software", "Mail software", "Main software"],
-    correct: 1
-  }
+  { id: 1, question: "Fake news damages democracy. What Gen-AI solution fits best?", type: "multiple", options: ["Real-time misinformation detection model", "Meme generators", "Offline rumor chain", "SMS propaganda"], correct: 0 },
+  { id: 2, question: "Corruption in municipal approvals reduces when:", type: "multiple", options: ["AI evaluates files with digital tracking trails", "Offices stay closed", "All approvals verbal", "No application required"], correct: 0 },
+  { id: 3, question: "Civics fails when court judgments are too complex. Gen-AI helps by:", type: "multiple", options: ["Auto-creating readable summaries for citizens", "Banning public access", "Encrypting legal files", "Hiding case history"], correct: 0 },
+  { id: 4, question: "Duplicate voter identity is a major civic flaw. Gen-AI helps by:", type: "multiple", options: ["Automated document verification", "Increasing voting age", "Removing ID cards", "Offline booth lists"], correct: 0 },
+  { id: 5, question: "Bribery in tender selection is a chronic governance failure. AI fixes by:", type: "multiple", options: ["Scored, automated tender evaluation", "Handwritten bidding", "Verbal assessments only", "Removing digital records"], correct: 0 },
+  { id: 6, question: "When RTI requests pile up, the civic system fails. Best AI fix:", type: "multiple", options: ["Auto-sorting + auto-summary of RTI queries", "Eliminate RTI", "File locking", "Delay replies"], correct: 0 },
+  { id: 7, question: "Judicial overload slows justice. Gen-AI reduces delay by:", type: "multiple", options: ["Case-priority recommendation engines", "Closing courts early", "Deleting old files", "Random scheduling"], correct: 0 },
+  { id: 8, question: "Lack of public awareness about laws is civic failure. AI solves via:", type: "multiple", options: ["Multi-language policy explanation generation", "English-only publishing", "Sealed bills", "Legal secrecy"], correct: 0 },
+  { id: 9, question: "Gen-AI can prevent subsidy fraud by:", type: "multiple", options: ["Biometric identity matching + anomaly detection", "Verbal approval only", "Paper-based tracking", "Manual signature matching"], correct: 0 },
+  { id: 10, question: "Corruption grows when govt data is unstructured. Gen-AI solves by:", type: "multiple", options: ["Converting raw data to readable structured insights", "Deleting datasets", "Offline filing", "Password-locked PDFs only"], correct: 0 },
+  { id: 11, question: "Poor grievance response is governance failure. AI improves by:", type: "multiple", options: ["Citizen-assist chatbots + query tracking", "Closing helplines", "Delayed email replies", "Manual tokens"], correct: 0 },
+  { id: 12, question: "Transparent public spending improves when AI:", type: "multiple", options: ["Generates anomaly-flagged financial reports", "Hides transaction logs", "Removes audit trails", "Allows no digital trace"], correct: 0 },
+  { id: 13, question: "Election misinformation is civic breakdown. The Gen-AI counter-tools?", type: "multiple", options: ["AI fact-checking + deepfake detection", "Baseless viral ads", "Anonymous influence chains", "One-sided propaganda"], correct: 0 },
+  { id: 14, question: "Failure in policy understanding can be fixed using AI-based:", type: "multiple", options: ["Simplified bill explanation models", "Technical documents only", "Handwritten notes", "No publication"], correct: 0 },
+  { id: 15, question: "Poor police case processing is civic inefficiency. AI reduces it by:", type: "multiple", options: ["FIR auto-drafting + crime-pattern prediction", "Verbal reporting only", "Manual notebooks", "No digital log"], correct: 0 },
+  { id: 16, question: "Election fraud control improves through:", type: "multiple", options: ["AI ballot-image verification", "Offline counting only", "SMS-voting without tracking", "No audit system"], correct: 0 },
+  { id: 17, question: "Digital tender transparency increases when AI:", type: "multiple", options: ["Generates corruption-risk scorecards", "Marks tenders confidential", "Removes public dashboards", "Deletes logs"], correct: 0 },
+  { id: 18, question: "Slow disaster response is government failure. AI solution?", type: "multiple", options: ["Real-time crisis modelling + predictive alerts", "Post-event paperwork", "Manual coordination", "Random announcements"], correct: 0 },
+  { id: 19, question: "Public schemes fail due to poor data hygiene. AI fixes through:", type: "multiple", options: ["Automated dataset cleaning + structured DB generation", "Paper-only storage", "Verbal record keeping", "Zero tracking"], correct: 0 },
+  { id: 20, question: "Policy feedback often ignored — civic failure. Gen-AI helps by:", type: "multiple", options: ["Feedback clustering & issue-priority mapping", "Deleting citizen feedback", "Manual SMS counting", "Random complaint selection"], correct: 0 },
+  { id: 21, question: "Legal verdicts are inaccessible to common citizens. AI fixes by:", type: "multiple", options: ["One-page simplified verdict summaries", "Technical-only format", "Private access", "Locked archives"], correct: 0 },
+  { id: 22, question: "Voting campaigns are manipulated digitally — civic failure. AI cure:", type: "multiple", options: ["Automated transparency reports on ad-spend", "Black-box influence engines", "Hidden campaign targeting", "Paid bias bots"], correct: 0 },
+  { id: 23, question: "A core governance flaw is manual attendance faking. AI solution:", type: "multiple", options: ["AI biometric attendance & ghost-employee detection", "Manual signing sheets", "Verbal presence", "Proxy marking"], correct: 0 },
+  { id: 24, question: "Judicial time waste reduces most through:", type: "multiple", options: ["AI summarization of case files + auto-drafting", "More handwritten files", "Closed digital access", "Verbal dictation"], correct: 0 },
+  { id: 25, question: "Legislative opacity weakens democracy. AI fixes through:", type: "multiple", options: ["AI-generated public dashboards showing policy impact", "Hidden bills", "Closed-door drafting", "No documentation"], correct: 0 },
+  { id: 26, question: "Major civic flaw in subsidy distribution is leakage. Gen-AI reduces by:", type: "multiple", options: ["Beneficiary verification + anomaly alerts", "Verbal approvals", "Manual ration slips", "Trust-based distribution"], correct: 0 },
+  { id: 27, question: "A governance flaw is low citizen participation. Gen-AI solution?", type: "multiple", options: ["Interactive policy-simulation tools for public input", "Public polling ban", "Offline suggestion boxes", "No awareness drives"], correct: 0 },
+  { id: 28, question: "When spending reports are hidden, corruption grows. AI fixes with:", type: "multiple", options: ["Auto-generated public audit dashboards", "Sealed ledgers", "Limited access", "No tracking reports"], correct: 0 },
+  { id: 29, question: "Fraud in welfare schemes thrives due to identity loopholes. Gen-AI combats via:", type: "multiple", options: ["Real-time beneficiary identity validation", "Paper records", "Verbal checks", "One-ID fits all"], correct: 0 },
+  { id: 30, question: "The most complete AI transformation for failed civics governance is:", type: "multiple", options: ["AI-based policy simulation + automated tax processing", "No digital systems", "Human-only decisions", "Untracked tenders"], correct: 0 }
 ];
 
 const RULES = [
@@ -92,6 +89,8 @@ export default function BrainBoltQuiz() {
   const [quizEnded, setQuizEnded] = useState(false);
   const [registeredEmails, setRegisteredEmails] = useState(new Set());
   const [alreadyCompleted, setAlreadyCompleted] = useState(false);
+  const [shuffledQuestions, setShuffledQuestions] = useState(null);
+  
   const [quizStartTime, setQuizStartTime] = useState(null);
   
   const visibilityRef = useRef(true);
@@ -268,6 +267,54 @@ export default function BrainBoltQuiz() {
     }
   }, [stage, quizStartTime]);
 
+  // Helper: shuffle an array (Fisher-Yates)
+  const shuffleArray = (array) => {
+    const arr = array.slice();
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    return arr;
+  };
+
+  const buildShuffledQuestions = () => {
+    return QUIZ_QUESTIONS.map((q) => {
+      if (q.type !== 'multiple' || !q.options) return q;
+      const origOptions = q.options.slice();
+      const shuffledOpts = shuffleArray(origOptions);
+
+      // Determine the correct option value robustly.
+      let correctValue = null;
+      if (typeof q.correct === 'number' && origOptions[q.correct] !== undefined) {
+        correctValue = origOptions[q.correct];
+      } else if (typeof q.correct === 'string') {
+        correctValue = q.correct;
+      } else if (typeof q.answer === 'string') {
+        correctValue = q.answer;
+      }
+
+      // Fallback: if we couldn't determine a correctValue, try to look for any option marked
+      // with special markers (not common) or default to the original first option.
+      if (correctValue == null) {
+        correctValue = origOptions[0];
+      }
+
+      // Find the new index of the correct option in the shuffled array.
+      let newCorrectIndex = shuffledOpts.findIndex(o => o === correctValue);
+
+      // Try a trimmed-string match as a robust fallback.
+      if (newCorrectIndex === -1 && typeof correctValue === 'string') {
+        const trimmed = correctValue.trim();
+        newCorrectIndex = shuffledOpts.findIndex(o => typeof o === 'string' && o.trim() === trimmed);
+      }
+
+      // Final fallback: if still not found, set to 0 so there's always a valid index.
+      if (newCorrectIndex === -1) newCorrectIndex = 0;
+
+      return { ...q, options: shuffledOpts, correct: newCorrectIndex };
+    });
+  };
+
   const handleRegistration = () => {
     // Validate all fields are filled
     if (!participant.name || !participant.college || !participant.email || !participant.phone) {
@@ -328,9 +375,10 @@ export default function BrainBoltQuiz() {
   const handleAnswer = (answer) => {
     if (showFeedback || quizTerminated || quizEnded) return;
 
-    const question = QUIZ_QUESTIONS[currentQuestion];
-    const isCorrect = question.type === 'boolean' 
-      ? answer === question.correct 
+    const questions = shuffledQuestions || QUIZ_QUESTIONS;
+    const question = questions[currentQuestion];
+    const isCorrect = question.type === 'boolean'
+      ? answer === question.correct
       : answer === question.correct;
 
     setSelectedAnswer(answer);
@@ -346,7 +394,7 @@ export default function BrainBoltQuiz() {
     });
 
     setTimeout(() => {
-      if (currentQuestion < QUIZ_QUESTIONS.length - 1) {
+      if (currentQuestion < questions.length - 1) {
         setCurrentQuestion(currentQuestion + 1);
         setTimeLeft(CONFIG.TIME_PER_QUESTION);
         setSelectedAnswer(null);
@@ -368,7 +416,8 @@ export default function BrainBoltQuiz() {
 
     submissionLock.current = true;
 
-    const percentage = ((finalScore / QUIZ_QUESTIONS.length) * 100).toFixed(2);
+    const totalQuestions = (shuffledQuestions || QUIZ_QUESTIONS).length;
+    const percentage = ((finalScore / totalQuestions) * 100).toFixed(2);
     const quizEndTime = new Date();
     const endTimestamp = quizEndTime.toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' });
     
@@ -387,7 +436,7 @@ export default function BrainBoltQuiz() {
       email: participant.email,
       phone: participant.phone,
       score: finalScore,
-      total: QUIZ_QUESTIONS.length,
+      total: totalQuestions,
       percentage: percentage,
       status: terminated ? 'TERMINATED' : 'COMPLETED',
       startTime: startTimestamp,
@@ -432,7 +481,7 @@ export default function BrainBoltQuiz() {
 College: ${participant.college}
 Email: ${participant.email}
 Phone: ${participant.phone}
-Score: ${finalScore}/${QUIZ_QUESTIONS.length}
+Score: ${finalScore}/${totalQuestions}
 Percentage: ${percentage}%
 Status: ${resultData.status}
 Start: ${resultData.startTime}
@@ -635,7 +684,12 @@ Duration (s): ${resultData.durationSeconds}`
           </div>
           
           <button
-            onClick={() => (canStartQuiz && !quizEnded) && setStage('quiz')}
+            onClick={() => {
+              if (canStartQuiz && !quizEnded) {
+                setShuffledQuestions(buildShuffledQuestions());
+                setStage('quiz');
+              }
+            }}
             disabled={!canStartQuiz || quizEnded}
             className={`w-full font-bold py-4 rounded-lg text-xl transition transform ${
               (canStartQuiz && !quizEnded)
@@ -674,20 +728,21 @@ Duration (s): ${resultData.durationSeconds}`
       );
     }
 
-    const question = QUIZ_QUESTIONS[currentQuestion];
+    const questions = shuffledQuestions || QUIZ_QUESTIONS;
+    const question = questions[currentQuestion];
     
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-600 to-purple-700 flex items-center justify-center p-4">
         <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-3xl w-full">
           <div className="mb-6">
             <div className="flex justify-between text-sm text-gray-600 mb-2">
-              <span>Question {currentQuestion + 1} of {QUIZ_QUESTIONS.length}</span>
+              <span>Question {currentQuestion + 1} of {questions.length}</span>
               <span className="font-semibold">⚠ Don't switch tabs!</span>
             </div>
             <div className="w-full bg-gray-200 rounded-full h-3">
               <div 
                 className="bg-blue-600 h-3 rounded-full transition-all duration-300"
-                style={{width: `${((currentQuestion + 1) / QUIZ_QUESTIONS.length) * 100}%`}}
+                style={{width: `${((currentQuestion + 1) / questions.length) * 100}%`}}
               />
             </div>
           </div>
