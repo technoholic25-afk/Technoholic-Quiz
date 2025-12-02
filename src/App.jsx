@@ -315,6 +315,38 @@ export default function BrainBoltQuiz() {
     });
   };
 
+  // Reset quiz UI/state so the app can return to welcome screen
+  const resetQuizState = () => {
+    setCurrentQuestion(0);
+    setAnswers({});
+    setTimeLeft(CONFIG.TIME_PER_QUESTION);
+    setScore(0);
+    setSelectedAnswer(null);
+    setShowFeedback(false);
+    setShuffledQuestions(null);
+    setQuizTerminated(false);
+    // do not clear registered/completed lists
+    setQuizStartTime(null);
+    setEmailSent(false);
+  };
+
+  // Auto-close (or fallback to welcome) 15s after results are shown
+  useEffect(() => {
+    if (stage === 'results') {
+      const t = setTimeout(() => {
+        try {
+          window.close();
+        } catch (e) {
+          // ignored
+        }
+        // Fallback: reset UI and return to welcome screen
+        resetQuizState();
+        setStage('welcome');
+      }, 15000);
+      return () => clearTimeout(t);
+    }
+  }, [stage]);
+
   const handleRegistration = () => {
     // Validate all fields are filled
     if (!participant.name || !participant.college || !participant.email || !participant.phone) {
@@ -755,7 +787,10 @@ Duration (s): ${resultData.durationSeconds}`
           </div>
 
           <div className="bg-blue-50 rounded-lg p-6 mb-6">
-            <h3 className="text-2xl font-bold text-gray-800">{question.question}</h3>
+            <h3 className="text-2xl font-bold text-gray-800">
+              <span className="inline-block mr-3 text-2xl font-extrabold">{currentQuestion + 1}.</span>
+              {question.question}
+            </h3>
           </div>
 
           <div className="space-y-3">
@@ -833,12 +868,7 @@ Duration (s): ${resultData.durationSeconds}`
             <p className="text-sm">Results will be announced shortly on the official platform.</p>
           </div>
           
-          {emailSent && (
-            <div className="bg-green-50 border-2 border-green-400 rounded-lg p-4 mt-6">
-              <CheckCircle className="w-8 h-8 text-green-600 mx-auto mb-2" />
-              <p className="text-green-700 font-semibold">Confirmation email sent to the host!</p>
-            </div>
-          )}
+          {/* Email confirmation message removed per request */}
         </div>
       </div>
 );
