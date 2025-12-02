@@ -30,30 +30,30 @@ const QUIZ_QUESTIONS = [
   { id: 4, question: "Duplicate voter identity is a major civic flaw. Gen-AI helps by:", type: "multiple", options: ["Automated document verification", "Increasing voting age", "Removing ID cards", "Offline booth lists"], correct: 0 },
   { id: 5, question: "Bribery in tender selection is a chronic governance failure. AI fixes by:", type: "multiple", options: ["Scored, automated tender evaluation", "Handwritten bidding", "Verbal assessments only", "Removing digital records"], correct: 0 },
   { id: 6, question: "When RTI requests pile up, the civic system fails. Best AI fix:", type: "multiple", options: ["Auto-sorting + auto-summary of RTI queries", "Eliminate RTI", "File locking", "Delay replies"], correct: 0 },
-  { id: 7, question: "Judicial overload slows justice. Gen-AI reduces delay by:", type: "multiple", options: ["Case-priority recommendation engines", "Closing courts early", "Deleting old files", "Random scheduling"], correct: 0 },
-  { id: 8, question: "Lack of public awareness about laws is civic failure. AI solves via:", type: "multiple", options: ["Multi-language policy explanation generation", "English-only publishing", "Sealed bills", "Legal secrecy"], correct: 0 },
-  { id: 9, question: "Gen-AI can prevent subsidy fraud by:", type: "multiple", options: ["Biometric identity matching + anomaly detection", "Verbal approval only", "Paper-based tracking", "Manual signature matching"], correct: 0 },
-  { id: 10, question: "Corruption grows when govt data is unstructured. Gen-AI solves by:", type: "multiple", options: ["Converting raw data to readable structured insights", "Deleting datasets", "Offline filing", "Password-locked PDFs only"], correct: 0 },
-  { id: 11, question: "Poor grievance response is governance failure. AI improves by:", type: "multiple", options: ["Citizen-assist chatbots + query tracking", "Closing helplines", "Delayed email replies", "Manual tokens"], correct: 0 },
-  { id: 12, question: "Transparent public spending improves when AI:", type: "multiple", options: ["Generates anomaly-flagged financial reports", "Hides transaction logs", "Removes audit trails", "Allows no digital trace"], correct: 0 },
-  { id: 13, question: "Election misinformation is civic breakdown. The Gen-AI counter-tools?", type: "multiple", options: ["AI fact-checking + deepfake detection", "Baseless viral ads", "Anonymous influence chains", "One-sided propaganda"], correct: 0 },
-  { id: 14, question: "Failure in policy understanding can be fixed using AI-based:", type: "multiple", options: ["Simplified bill explanation models", "Technical documents only", "Handwritten notes", "No publication"], correct: 0 },
-  { id: 15, question: "Poor police case processing is civic inefficiency. AI reduces it by:", type: "multiple", options: ["FIR auto-drafting + crime-pattern prediction", "Verbal reporting only", "Manual notebooks", "No digital log"], correct: 0 },
-  { id: 16, question: "Election fraud control improves through:", type: "multiple", options: ["AI ballot-image verification", "Offline counting only", "SMS-voting without tracking", "No audit system"], correct: 0 },
-  { id: 17, question: "Digital tender transparency increases when AI:", type: "multiple", options: ["Generates corruption-risk scorecards", "Marks tenders confidential", "Removes public dashboards", "Deletes logs"], correct: 0 },
-  { id: 18, question: "Slow disaster response is government failure. AI solution?", type: "multiple", options: ["Real-time crisis modelling + predictive alerts", "Post-event paperwork", "Manual coordination", "Random announcements"], correct: 0 },
-  { id: 19, question: "Public schemes fail due to poor data hygiene. AI fixes through:", type: "multiple", options: ["Automated dataset cleaning + structured DB generation", "Paper-only storage", "Verbal record keeping", "Zero tracking"], correct: 0 },
-  { id: 20, question: "Policy feedback often ignored — civic failure. Gen-AI helps by:", type: "multiple", options: ["Feedback clustering & issue-priority mapping", "Deleting citizen feedback", "Manual SMS counting", "Random complaint selection"], correct: 0 },
-  { id: 21, question: "Legal verdicts are inaccessible to common citizens. AI fixes by:", type: "multiple", options: ["One-page simplified verdict summaries", "Technical-only format", "Private access", "Locked archives"], correct: 0 },
-  { id: 22, question: "Voting campaigns are manipulated digitally — civic failure. AI cure:", type: "multiple", options: ["Automated transparency reports on ad-spend", "Black-box influence engines", "Hidden campaign targeting", "Paid bias bots"], correct: 0 },
-  { id: 23, question: "A core governance flaw is manual attendance faking. AI solution:", type: "multiple", options: ["AI biometric attendance & ghost-employee detection", "Manual signing sheets", "Verbal presence", "Proxy marking"], correct: 0 },
-  { id: 24, question: "Judicial time waste reduces most through:", type: "multiple", options: ["AI summarization of case files + auto-drafting", "More handwritten files", "Closed digital access", "Verbal dictation"], correct: 0 },
-  { id: 25, question: "Legislative opacity weakens democracy. AI fixes through:", type: "multiple", options: ["AI-generated public dashboards showing policy impact", "Hidden bills", "Closed-door drafting", "No documentation"], correct: 0 },
-  { id: 26, question: "Major civic flaw in subsidy distribution is leakage. Gen-AI reduces by:", type: "multiple", options: ["Beneficiary verification + anomaly alerts", "Verbal approvals", "Manual ration slips", "Trust-based distribution"], correct: 0 },
-  { id: 27, question: "A governance flaw is low citizen participation. Gen-AI solution?", type: "multiple", options: ["Interactive policy-simulation tools for public input", "Public polling ban", "Offline suggestion boxes", "No awareness drives"], correct: 0 },
-  { id: 28, question: "When spending reports are hidden, corruption grows. AI fixes with:", type: "multiple", options: ["Auto-generated public audit dashboards", "Sealed ledgers", "Limited access", "No tracking reports"], correct: 0 },
-  { id: 29, question: "Fraud in welfare schemes thrives due to identity loopholes. Gen-AI combats via:", type: "multiple", options: ["Real-time beneficiary identity validation", "Paper records", "Verbal checks", "One-ID fits all"], correct: 0 },
-  { id: 30, question: "The most complete AI transformation for failed civics governance is:", type: "multiple", options: ["AI-based policy simulation + automated tax processing", "No digital systems", "Human-only decisions", "Untracked tenders"], correct: 0 }
+  // { id: 7, question: "Judicial overload slows justice. Gen-AI reduces delay by:", type: "multiple", options: ["Case-priority recommendation engines", "Closing courts early", "Deleting old files", "Random scheduling"], correct: 0 },
+  // { id: 8, question: "Lack of public awareness about laws is civic failure. AI solves via:", type: "multiple", options: ["Multi-language policy explanation generation", "English-only publishing", "Sealed bills", "Legal secrecy"], correct: 0 },
+  // { id: 9, question: "Gen-AI can prevent subsidy fraud by:", type: "multiple", options: ["Biometric identity matching + anomaly detection", "Verbal approval only", "Paper-based tracking", "Manual signature matching"], correct: 0 },
+  // { id: 10, question: "Corruption grows when govt data is unstructured. Gen-AI solves by:", type: "multiple", options: ["Converting raw data to readable structured insights", "Deleting datasets", "Offline filing", "Password-locked PDFs only"], correct: 0 },
+  // { id: 11, question: "Poor grievance response is governance failure. AI improves by:", type: "multiple", options: ["Citizen-assist chatbots + query tracking", "Closing helplines", "Delayed email replies", "Manual tokens"], correct: 0 },
+  // { id: 12, question: "Transparent public spending improves when AI:", type: "multiple", options: ["Generates anomaly-flagged financial reports", "Hides transaction logs", "Removes audit trails", "Allows no digital trace"], correct: 0 },
+  // { id: 13, question: "Election misinformation is civic breakdown. The Gen-AI counter-tools?", type: "multiple", options: ["AI fact-checking + deepfake detection", "Baseless viral ads", "Anonymous influence chains", "One-sided propaganda"], correct: 0 },
+  // { id: 14, question: "Failure in policy understanding can be fixed using AI-based:", type: "multiple", options: ["Simplified bill explanation models", "Technical documents only", "Handwritten notes", "No publication"], correct: 0 },
+  // { id: 15, question: "Poor police case processing is civic inefficiency. AI reduces it by:", type: "multiple", options: ["FIR auto-drafting + crime-pattern prediction", "Verbal reporting only", "Manual notebooks", "No digital log"], correct: 0 },
+  // { id: 16, question: "Election fraud control improves through:", type: "multiple", options: ["AI ballot-image verification", "Offline counting only", "SMS-voting without tracking", "No audit system"], correct: 0 },
+  // { id: 17, question: "Digital tender transparency increases when AI:", type: "multiple", options: ["Generates corruption-risk scorecards", "Marks tenders confidential", "Removes public dashboards", "Deletes logs"], correct: 0 },
+  // { id: 18, question: "Slow disaster response is government failure. AI solution?", type: "multiple", options: ["Real-time crisis modelling + predictive alerts", "Post-event paperwork", "Manual coordination", "Random announcements"], correct: 0 },
+  // { id: 19, question: "Public schemes fail due to poor data hygiene. AI fixes through:", type: "multiple", options: ["Automated dataset cleaning + structured DB generation", "Paper-only storage", "Verbal record keeping", "Zero tracking"], correct: 0 },
+  // { id: 20, question: "Policy feedback often ignored — civic failure. Gen-AI helps by:", type: "multiple", options: ["Feedback clustering & issue-priority mapping", "Deleting citizen feedback", "Manual SMS counting", "Random complaint selection"], correct: 0 },
+  // { id: 21, question: "Legal verdicts are inaccessible to common citizens. AI fixes by:", type: "multiple", options: ["One-page simplified verdict summaries", "Technical-only format", "Private access", "Locked archives"], correct: 0 },
+  // { id: 22, question: "Voting campaigns are manipulated digitally — civic failure. AI cure:", type: "multiple", options: ["Automated transparency reports on ad-spend", "Black-box influence engines", "Hidden campaign targeting", "Paid bias bots"], correct: 0 },
+  // { id: 23, question: "A core governance flaw is manual attendance faking. AI solution:", type: "multiple", options: ["AI biometric attendance & ghost-employee detection", "Manual signing sheets", "Verbal presence", "Proxy marking"], correct: 0 },
+  // { id: 24, question: "Judicial time waste reduces most through:", type: "multiple", options: ["AI summarization of case files + auto-drafting", "More handwritten files", "Closed digital access", "Verbal dictation"], correct: 0 },
+  // { id: 25, question: "Legislative opacity weakens democracy. AI fixes through:", type: "multiple", options: ["AI-generated public dashboards showing policy impact", "Hidden bills", "Closed-door drafting", "No documentation"], correct: 0 },
+  // { id: 26, question: "Major civic flaw in subsidy distribution is leakage. Gen-AI reduces by:", type: "multiple", options: ["Beneficiary verification + anomaly alerts", "Verbal approvals", "Manual ration slips", "Trust-based distribution"], correct: 0 },
+  // { id: 27, question: "A governance flaw is low citizen participation. Gen-AI solution?", type: "multiple", options: ["Interactive policy-simulation tools for public input", "Public polling ban", "Offline suggestion boxes", "No awareness drives"], correct: 0 },
+  // { id: 28, question: "When spending reports are hidden, corruption grows. AI fixes with:", type: "multiple", options: ["Auto-generated public audit dashboards", "Sealed ledgers", "Limited access", "No tracking reports"], correct: 0 },
+  // { id: 29, question: "Fraud in welfare schemes thrives due to identity loopholes. Gen-AI combats via:", type: "multiple", options: ["Real-time beneficiary identity validation", "Paper records", "Verbal checks", "One-ID fits all"], correct: 0 },
+  // { id: 30, question: "The most complete AI transformation for failed civics governance is:", type: "multiple", options: ["AI-based policy simulation + automated tax processing", "No digital systems", "Human-only decisions", "Untracked tenders"], correct: 0 }
 ];
 
 const RULES = [
@@ -342,10 +342,26 @@ export default function BrainBoltQuiz() {
         // Fallback: reset UI and return to welcome screen
         resetQuizState();
         setStage('welcome');
-      }, 15000);
+      }, 7000);
       return () => clearTimeout(t);
     }
   }, [stage]);
+
+  // Auto-close terminated quiz screen after 7s (attempt close, fallback to welcome)
+  useEffect(() => {
+    if (quizTerminated && stage === 'quiz') {
+      const t2 = setTimeout(() => {
+        try {
+          window.close();
+        } catch (e) {
+          // ignored
+        }
+        resetQuizState();
+        setStage('welcome');
+      }, 7000);
+      return () => clearTimeout(t2);
+    }
+  }, [quizTerminated, stage]);
 
   const handleRegistration = () => {
     // Validate all fields are filled
