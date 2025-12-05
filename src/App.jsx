@@ -108,7 +108,6 @@ export default function BrainBoltQuiz() {
       const savedCompleted = localStorage.getItem('completedEmails');
       if (savedCompleted) {
         const arr = JSON.parse(savedCompleted);
-        // If current email is in completed list, show already completed message
         const emails = arr.map(e => e.toLowerCase());
       }
     } catch (e) {
@@ -174,11 +173,9 @@ export default function BrainBoltQuiz() {
       quizEnd.setHours(parseInt(eh, 10), parseInt(em, 10), 0, 0);
 
       if (now >= quizEnd) {
-        // Quiz period is over
         setQuizEnded(true);
         setCanStartQuiz(false);
         setTimeUntilStart('Quiz ended');
-        // If someone is mid-quiz, auto-submit and move to results
         if (stage === 'quiz' && !quizTerminated) {
           setQuizTerminated(true);
           submitQuizResults(score, false);
@@ -187,7 +184,6 @@ export default function BrainBoltQuiz() {
         return;
       }
 
-      // Not yet ended
       setQuizEnded(false);
 
       if (now >= quizStart) {
@@ -259,7 +255,7 @@ export default function BrainBoltQuiz() {
     }
   }, [timeLeft, stage, showFeedback, quizTerminated]);
 
-  // Set quiz start time when entering quiz stage (MOVED HERE)
+  // Set quiz start time when entering quiz stage
   useEffect(() => {
     if (stage === 'quiz' && !quizStartTime) {
       setQuizStartTime(new Date());
@@ -277,9 +273,15 @@ export default function BrainBoltQuiz() {
     return arr;
   };
 
+  // Build shuffled questions *and* shuffled options for each participant
   const buildShuffledQuestions = () => {
-    return QUIZ_QUESTIONS.map((q) => {
+    // 1) Shuffle the question order
+    const shuffledQuestionOrder = shuffleArray(QUIZ_QUESTIONS);
+
+    // 2) For each question, shuffle its options and recompute the correct index
+    return shuffledQuestionOrder.map((q) => {
       if (q.type !== 'multiple' || !q.options) return q;
+
       const origOptions = q.options.slice();
       const shuffledOpts = shuffleArray(origOptions);
 
@@ -293,8 +295,6 @@ export default function BrainBoltQuiz() {
         correctValue = q.answer;
       }
 
-      // Fallback: if we couldn't determine a correctValue, try to look for any option marked
-      // with special markers (not common) or default to the original first option.
       if (correctValue == null) {
         correctValue = origOptions[0];
       }
@@ -308,7 +308,6 @@ export default function BrainBoltQuiz() {
         newCorrectIndex = shuffledOpts.findIndex(o => typeof o === 'string' && o.trim() === trimmed);
       }
 
-      // Final fallback: if still not found, set to 0 so there's always a valid index.
       if (newCorrectIndex === -1) newCorrectIndex = 0;
 
       return { ...q, options: shuffledOpts, correct: newCorrectIndex };
@@ -325,12 +324,11 @@ export default function BrainBoltQuiz() {
     setShowFeedback(false);
     setShuffledQuestions(null);
     setQuizTerminated(false);
-    // do not clear registered/completed lists
     setQuizStartTime(null);
     setEmailSent(false);
   };
 
-  // Auto-close (or fallback to welcome) 15s after results are shown
+  // Auto-close (or fallback to welcome) after results are shown
   useEffect(() => {
     if (stage === 'results') {
       const t = setTimeout(() => {
@@ -339,7 +337,6 @@ export default function BrainBoltQuiz() {
         } catch (e) {
           // ignored
         }
-        // Fallback: reset UI and return to welcome screen
         resetQuizState();
         setStage('welcome');
       }, 7000);
@@ -364,32 +361,27 @@ export default function BrainBoltQuiz() {
   }, [quizTerminated, stage]);
 
   const handleRegistration = () => {
-    // Validate all fields are filled
     if (!participant.name || !participant.college || !participant.email || !participant.phone) {
       alert('Please fill in all required fields');
       return;
     }
 
-    // Validate name (not empty and contains only letters and spaces)
     if (!/^[a-zA-Z\s]+$/.test(participant.name.trim())) {
       alert('Name should contain only letters and spaces');
       return;
     }
 
-    // Validate college name (not empty)
     if (participant.college.trim().length < 2) {
       alert('Please enter a valid college name');
       return;
     }
 
-    // Validate email format
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(participant.email.trim())) {
       alert('Please enter a valid email address');
       return;
     }
 
-    // Validate phone number (only digits, 10 digits)
     if (!/^\d{10}$/.test(participant.phone.replace(/\D/g, ''))) {
       alert('Phone number must be exactly 10 digits');
       return;
@@ -402,20 +394,17 @@ export default function BrainBoltQuiz() {
 
     const emailLower = participant.email.toLowerCase();
 
-    // Check if email already completed the quiz
     if (isEmailCompleted(emailLower)) {
       alert('This email has already completed the quiz. You cannot take it again.');
       setAlreadyCompleted(true);
       return;
     }
 
-    // Check if email is already registered
     if (registeredEmails.has(emailLower)) {
       alert('This email has already been registered. You cannot register twice.');
       return;
     }
 
-    // Mark this email as registered and proceed
     saveRegisteredEmail(emailLower);
     setStage('rules');
   };
@@ -456,7 +445,6 @@ export default function BrainBoltQuiz() {
   };
 
   const submitQuizResults = async (finalScore, terminated = false) => {
-    // Prevent duplicate submissions
     if (submissionLock.current) {
       console.warn('Submission already in progress. Skipping duplicate submission.');
       return;
@@ -469,7 +457,6 @@ export default function BrainBoltQuiz() {
     const quizEndTime = new Date();
     const endTimestamp = quizEndTime.toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' });
     
-    // Calculate duration in seconds
     let durationSeconds = 0;
     let startTimestamp = 'N/A';
 
@@ -494,16 +481,12 @@ export default function BrainBoltQuiz() {
 
     console.log('Submitting results:', resultData);
 
-    // Send to Google Sheets
     try {
       const payload = JSON.stringify({
         action: 'addResult',
         data: resultData
       });
 
-      console.log('Payload being sent to Google Sheets:', payload);
-
-      // keep this if your Apps Script requires no-cors (it will be opaque)
       await fetch(CONFIG.GOOGLE_SHEET_URL, {
         method: 'POST',
         mode: 'no-cors',
@@ -515,8 +498,6 @@ export default function BrainBoltQuiz() {
       
       console.log('✅ Data sent to Google Sheets');
 
-      // --- NEW: Send email via Web3Forms ---
-      // Web3Forms requires a POST to https://api.web3forms.com/submit with access_key
       try {
         const web3Payload = {
           access_key: CONFIG.WEB3FORMS_ACCESS_KEY,
@@ -524,7 +505,6 @@ export default function BrainBoltQuiz() {
           name: participant.name,
           email: participant.email,
           phone: participant.phone,
-          // Put useful details in the message
           message: `Name: ${participant.name}
 College: ${participant.college}
 Email: ${participant.email}
@@ -540,7 +520,6 @@ Duration (s): ${resultData.durationSeconds}`
         const web3Resp = await fetch('https://api.web3forms.com/submit', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          // IMPORTANT: do NOT use mode: 'no-cors' here — you want real response/errors
           body: JSON.stringify(web3Payload)
         });
 
@@ -550,7 +529,6 @@ Duration (s): ${resultData.durationSeconds}`
         console.warn('Web3Forms error:', web3Err);
       }
 
-      // Mark email as completed only after attempts complete
       saveCompletedEmail(participant.email);
       setEmailSent(true);
     } catch (error) {
@@ -560,25 +538,38 @@ Duration (s): ${resultData.durationSeconds}`
     }
   };
 
+  // Shared header (normal, not fixed)
+  const Header = () => (
+    <header className="w-full bg-white flex justify-center shadow-md">
+      <img
+        src="/HEADER.png"
+        alt="Brain Bolt Header"
+        className="w-full max-h-40 md:max-h-45 object-contain"
+      />
+    </header>
+  );
+
   // Already Completed Screen
   if (alreadyCompleted) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-600 to-purple-700 flex items-center justify-center p-4">
-        <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-2xl w-full text-center">
-          <AlertTriangle className="w-24 h-24 text-yellow-500 mx-auto mb-4" />
-          <h2 className="text-4xl font-bold text-yellow-600 mb-4">Already Participated!</h2>
-          <p className="text-xl text-gray-700 mb-6">
-            This email address has already completed the quiz.
-          </p>
-          <div className="bg-yellow-50 border-2 border-yellow-300 rounded-lg p-6 mb-6">
-            <p className="text-lg text-yellow-800 font-semibold">
-              You can only participate once in this quiz.
+      <div className="min-h-screen bg-gradient-to-br from-blue-600 to-purple-700">
+        <Header />
+        <div className="pt-8 md:pt-12 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-2xl w-full text-center">
+            <AlertTriangle className="w-24 h-24 text-yellow-500 mx-auto mb-4" />
+            <h2 className="text-4xl font-bold text-yellow-600 mb-4">Already Participated!</h2>
+            <p className="text-xl text-gray-700 mb-6">
+              This email address has already completed the quiz.
             </p>
-            <p className="text-sm text-yellow-700 mt-2">
-              If you believe this is an error, please contact the organizers.
-            </p>
+            <div className="bg-yellow-50 border-2 border-yellow-300 rounded-lg p-6 mb-6">
+              <p className="text-lg text-yellow-800 font-semibold">
+                You can only participate once in this quiz.
+              </p>
+              <p className="text-sm text-yellow-700 mt-2">
+                If you believe this is an error, please contact the organizers.
+              </p>
+            </div>
           </div>
-          
         </div>
       </div>
     );
@@ -587,33 +578,36 @@ Duration (s): ${resultData.durationSeconds}`
   // Welcome Screen
   if (stage === 'welcome') {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-600 to-purple-700 flex items-center justify-center p-4">
-        <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-2xl w-full text-center">
-          <Trophy className="w-20 h-20 text-yellow-500 mx-auto mb-4" />
-          <h1 className="text-2xl sm:text-4xl font-bold text-gray-800 mb-2">KBP College, Thane presents</h1>
-          <h2 className="text-3xl sm:text-5xl font-extrabold text-blue-600 mb-4">Technoholic 2025</h2>
-          <div className="bg-gradient-to-r from-purple-500 to-pink-500 text-white py-4 px-6 rounded-xl mb-6">
-            <h3 className="text-xl sm:text-3xl font-bold">"Brain Bolt" Quiz Competition</h3>
-          </div>
-          <p className="text-xl text-gray-600 mb-8">Digital Civics Challenge</p>
-          
-          {!canStartQuiz && (
-            <div className="bg-yellow-50 border-2 border-yellow-400 rounded-lg p-6 mb-6">
-              <Clock className="w-12 h-12 text-yellow-600 mx-auto mb-2" />
-              <p className="text-lg font-semibold text-yellow-800 mb-2">Quiz starts in:</p>
-              <p className="text-3xl font-bold text-yellow-900">{timeUntilStart}</p>
-              <p className="text-sm text-yellow-700 mt-2">Scheduled: {CONFIG.QUIZ_START_DATE} at {CONFIG.QUIZ_START_TIME}</p>
-              <p className="text-sm text-yellow-700 mt-1">Ends: {CONFIG.QUIZ_END_DATE} at {CONFIG.QUIZ_END_TIME}</p>
+      <div className="min-h-screen bg-gradient-to-br from-blue-600 to-purple-700">
+        <Header />
+        <div className="pt-6 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-2xl w-full text-center">
+            <Trophy className="w-20 h-20 text-yellow-500 mx-auto mb-4" />
+            <h1 className="text-2xl sm:text-4xl font-bold text-gray-800 mb-2">KBP College, Thane presents</h1>
+            <h2 className="text-3xl sm:text-5xl font-extrabold text-blue-600 mb-4">Technoholic 2025</h2>
+            <div className="bg-gradient-to-r from-purple-500 to-pink-500 text-white py-4 px-6 rounded-xl mb-6">
+              <h3 className="text-xl sm:text-3xl font-bold">"Brain Bolt" Quiz Competition</h3>
             </div>
-          )}
-          
-          <button
-            onClick={() => { if (!quizEnded) setStage('registration'); }}
-            disabled={quizEnded}
-            className={`${quizEnded ? 'bg-gray-400 text-gray-200 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700 text-white'} font-bold py-4 px-8 rounded-lg text-xl transition transform hover:scale-105`}
-          >
-            {quizEnded ? 'Quiz Ended' : (canStartQuiz ? 'Start Registration' : 'Register Now (Quiz starts later)')}
-          </button>
+            <p className="text-xl text-gray-600 mb-8">Digital Civics Challenge</p>
+            
+            {!canStartQuiz && (
+              <div className="bg-yellow-50 border-2 border-yellow-400 rounded-lg p-6 mb-6">
+                <Clock className="w-12 h-12 text-yellow-600 mx-auto mb-2" />
+                <p className="text-lg font-semibold text-yellow-800 mb-2">Quiz starts in:</p>
+                <p className="text-3xl font-bold text-yellow-900">{timeUntilStart}</p>
+                <p className="text-sm text-yellow-700 mt-2">Scheduled: {CONFIG.QUIZ_START_DATE} at {CONFIG.QUIZ_START_TIME}</p>
+                <p className="text-sm text-yellow-700 mt-1">Ends: {CONFIG.QUIZ_END_DATE} at {CONFIG.QUIZ_END_TIME}</p>
+              </div>
+            )}
+            
+            <button
+              onClick={() => { if (!quizEnded) setStage('registration'); }}
+              disabled={quizEnded}
+              className={`${quizEnded ? 'bg-gray-400 text-gray-200 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700 text-white'} font-bold py-4 px-8 rounded-lg text-xl transition transform hover:scale-105`}
+            >
+              {quizEnded ? 'Quiz Ended' : (canStartQuiz ? 'Start Registration' : 'Register Now (Quiz starts later)')}
+            </button>
+          </div>
         </div>
       </div>
     );
@@ -622,77 +616,80 @@ Duration (s): ${resultData.durationSeconds}`
   // Registration Screen
   if (stage === 'registration') {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-600 to-purple-700 flex items-center justify-center p-4">
-        <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full">
-          <h2 className="text-2xl sm:text-3xl font-bold text-gray-800 mb-6 text-center">Participant Registration</h2>
-          <div className="space-y-4">
-            <div>
-              <label className="flex items-center text-gray-700 font-semibold mb-2">
-                <User className="w-5 h-5 mr-2" />
-                Full Name *
-              </label>
-              <input
-                type="text"
-                value={participant.name}
-                onChange={(e) => {
-                  const value = e.target.value.replace(/[^a-zA-Z\s]/g, '');
-                  setParticipant({...participant, name: value});
-                }}
-                className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none"
-                placeholder="Enter your full name"
-              />
+      <div className="min-h-screen bg-gradient-to-br from-blue-600 to-purple-700">
+        <Header />
+        <div className="pt-6 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full">
+            <h2 className="text-2xl sm:text-3xl font-bold text-gray-800 mb-6 text-center">Participant Registration</h2>
+            <div className="space-y-4">
+              <div>
+                <label className="flex items-center text-gray-700 font-semibold mb-2">
+                  <User className="w-5 h-5 mr-2" />
+                  Full Name *
+                </label>
+                <input
+                  type="text"
+                  value={participant.name}
+                  onChange={(e) => {
+                    const value = e.target.value.replace(/[^a-zA-Z\s]/g, '');
+                    setParticipant({...participant, name: value});
+                  }}
+                  className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none"
+                  placeholder="Enter your full name"
+                />
+              </div>
+              <div>
+                <label className="flex items-center text-gray-700 font-semibold mb-2">
+                  <Building className="w-5 h-5 mr-2" />
+                  College Name *
+                </label>
+                <input
+                  type="text"
+                  value={participant.college}
+                  onChange={(e) => setParticipant({...participant, college: e.target.value})}
+                  className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none"
+                  placeholder="Enter your college name"
+                />
+              </div>
+              <div>
+                <label className="flex items-center text-gray-700 font-semibold mb-2">
+                  <Mail className="w-5 h-5 mr-2" />
+                  Email Address *
+                </label>
+                <input
+                  type="email"
+                  value={participant.email}
+                  onChange={(e) => setParticipant({...participant, email: e.target.value})}
+                  className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none"
+                  placeholder="your.email@example.com"
+                />
+              </div>
+              <div>
+                <label className="flex items-center text-gray-700 font-semibold mb-2">
+                  <Phone className="w-5 h-5 mr-2" />
+                  Phone Number *
+                </label>
+                <input
+                  type="tel"
+                  value={participant.phone}
+                  onChange={(e) => {
+                    const value = e.target.value.replace(/\D/g, '');
+                    if (value.length <= 10) {
+                      setParticipant({...participant, phone: value});
+                    }
+                  }}
+                  className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none"
+                  placeholder="10-digit mobile number"
+                  maxLength="10"
+                />
+              </div>
+              <button
+                onClick={handleRegistration}
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg transition transform hover:scale-105"
+              >
+                Continue to Rules
+              </button>
             </div>
-            <div>
-              <label className="flex items-center text-gray-700 font-semibold mb-2">
-                <Building className="w-5 h-5 mr-2" />
-                College Name *
-              </label>
-              <input
-                type="text"
-                value={participant.college}
-                onChange={(e) => setParticipant({...participant, college: e.target.value})}
-                className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none"
-                placeholder="Enter your college name"
-              />
-            </div>
-            <div>
-              <label className="flex items-center text-gray-700 font-semibold mb-2">
-                <Mail className="w-5 h-5 mr-2" />
-                Email Address *
-              </label>
-              <input
-                type="email"
-                value={participant.email}
-                onChange={(e) => setParticipant({...participant, email: e.target.value})}
-                className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none"
-                placeholder="your.email@example.com"
-              />
-            </div>
-            <div>
-              <label className="flex items-center text-gray-700 font-semibold mb-2">
-                <Phone className="w-5 h-5 mr-2" />
-                Phone Number *
-              </label>
-              <input
-                type="tel"
-                value={participant.phone}
-                onChange={(e) => {
-                  const value = e.target.value.replace(/\D/g, '');
-                  if (value.length <= 10) {
-                    setParticipant({...participant, phone: value});
-                  }
-                }}
-                className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none"
-                placeholder="10-digit mobile number"
-                maxLength="10"
-              />
-            </div>
-            <button
-              onClick={handleRegistration}
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg transition transform hover:scale-105"
-            >
-              Continue to Rules
-            </button>
           </div>
         </div>
       </div>
@@ -702,51 +699,54 @@ Duration (s): ${resultData.durationSeconds}`
   // Rules Screen with Timer
   if (stage === 'rules') {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-600 to-purple-700 flex items-center justify-center p-4">
-        <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-2xl w-full">
-          <h2 className="text-2xl sm:text-3xl font-bold text-gray-800 mb-6 text-center">Quiz Rules</h2>
-          
-          {!canStartQuiz && (
-            <div className="bg-yellow-50 border-2 border-yellow-400 rounded-lg p-4 mb-6 text-center">
-              <Clock className="w-10 h-10 text-yellow-600 mx-auto mb-2" />
-              <p className="text-lg font-semibold text-yellow-800">Quiz will start automatically in:</p>
-              <p className="text-2xl font-bold text-yellow-900 mt-2">{timeUntilStart}</p>
-              <p className="text-sm text-yellow-700 mt-2">Scheduled: {CONFIG.QUIZ_START_DATE} at {CONFIG.QUIZ_START_TIME}</p>
-              <p className="text-sm text-yellow-700 mt-1">Ends: {CONFIG.QUIZ_END_DATE} at {CONFIG.QUIZ_END_TIME}</p>
+      <div className="min-h-screen bg-gradient-to-br from-blue-600 to-purple-700">
+        <Header />
+        <div className="pt-6 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-2xl w-full">
+            <h2 className="text-2xl sm:text-3xl font-bold text-gray-800 mb-6 text-center">Quiz Rules</h2>
+            
+            {!canStartQuiz && (
+              <div className="bg-yellow-50 border-2 border-yellow-400 rounded-lg p-4 mb-6 text-center">
+                <Clock className="w-10 h-10 text-yellow-600 mx-auto mb-2" />
+                <p className="text-lg font-semibold text-yellow-800">Quiz will start automatically in:</p>
+                <p className="text-2xl font-bold text-yellow-900 mt-2">{timeUntilStart}</p>
+                <p className="text-sm text-yellow-700 mt-2">Scheduled: {CONFIG.QUIZ_START_DATE} at {CONFIG.QUIZ_START_TIME}</p>
+                <p className="text-sm text-yellow-700 mt-1">Ends: {CONFIG.QUIZ_END_DATE} at {CONFIG.QUIZ_END_TIME}</p>
+              </div>
+            )}
+            
+            <div className="bg-blue-50 rounded-lg p-6 mb-6">
+              <ul className="space-y-3">
+                {RULES.map((rule, index) => (
+                  <li key={index} className="flex items-start">
+                    <CheckCircle className="w-6 h-6 text-green-500 mr-3 flex-shrink-0 mt-0.5" />
+                    <span className="text-gray-700">{rule}</span>
+                  </li>
+                ))}
+              </ul>
             </div>
-          )}
-          
-          <div className="bg-blue-50 rounded-lg p-6 mb-6">
-            <ul className="space-y-3">
-              {RULES.map((rule, index) => (
-                <li key={index} className="flex items-start">
-                  <CheckCircle className="w-6 h-6 text-green-500 mr-3 flex-shrink-0 mt-0.5" />
-                  <span className="text-gray-700">{rule}</span>
-                </li>
-              ))}
-            </ul>
+            
+            <div className="bg-red-50 border-l-4 border-red-500 p-4 mb-6">
+              <p className="text-red-800 font-semibold">⚠ WARNING: Switching tabs will automatically terminate your quiz!</p>
+            </div>
+            
+            <button
+              onClick={() => {
+                if (canStartQuiz && !quizEnded) {
+                  setShuffledQuestions(buildShuffledQuestions());
+                  setStage('quiz');
+                }
+              }}
+              disabled={!canStartQuiz || quizEnded}
+              className={`w-full font-bold py-4 rounded-lg text-xl transition transform ${
+                (canStartQuiz && !quizEnded)
+                  ? 'bg-green-600 hover:bg-green-700 text-white hover:scale-105'
+                  : 'bg-gray-400 text-gray-200 cursor-not-allowed'
+              }`}
+            >
+              {quizEnded ? 'Quiz Ended' : (canStartQuiz ? 'I Understand - Start Quiz' : 'Waiting for Quiz Time...')}
+            </button>
           </div>
-          
-          <div className="bg-red-50 border-l-4 border-red-500 p-4 mb-6">
-            <p className="text-red-800 font-semibold">⚠ WARNING: Switching tabs will automatically terminate your quiz!</p>
-          </div>
-          
-          <button
-            onClick={() => {
-              if (canStartQuiz && !quizEnded) {
-                setShuffledQuestions(buildShuffledQuestions());
-                setStage('quiz');
-              }
-            }}
-            disabled={!canStartQuiz || quizEnded}
-            className={`w-full font-bold py-4 rounded-lg text-xl transition transform ${
-              (canStartQuiz && !quizEnded)
-                ? 'bg-green-600 hover:bg-green-700 text-white hover:scale-105'
-                : 'bg-gray-400 text-gray-200 cursor-not-allowed'
-            }`}
-          >
-            {quizEnded ? 'Quiz Ended' : (canStartQuiz ? 'I Understand - Start Quiz' : 'Waiting for Quiz Time...')}
-          </button>
         </div>
       </div>
     );
@@ -756,20 +756,23 @@ Duration (s): ${resultData.durationSeconds}`
   if (stage === 'quiz') {
     if (quizTerminated) {
       return (
-        <div className="min-h-screen bg-gradient-to-br from-red-600 to-red-800 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-2xl w-full text-center">
-            <AlertTriangle className="w-24 h-24 text-red-500 mx-auto mb-4" />
-            <h2 className="text-4xl font-bold text-red-600 mb-4">Quiz Terminated!</h2>
-            <p className="text-xl text-gray-700 mb-6">
-              You switched tabs or minimized the window. Your quiz has been automatically submitted.
-            </p>
-            <div className="bg-red-50 border-2 border-red-300 rounded-lg p-6 mb-6">
-              <p className="text-lg text-red-800 font-semibold">
-                Your progress has been recorded and submitted to the organizers.
+        <div className="min-h-screen bg-gradient-to-br from-red-600 to-red-800">
+          <Header />
+          <div className="pt-6 flex items-center justify-center p-4">
+            <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-2xl w-full text-center">
+              <AlertTriangle className="w-24 h-24 text-red-500 mx-auto mb-4" />
+              <h2 className="text-4xl font-bold text-red-600 mb-4">Quiz Terminated!</h2>
+              <p className="text-xl text-gray-700 mb-6">
+                You switched tabs or minimized the window. Your quiz has been automatically submitted.
               </p>
-              <p className="text-sm text-red-600 mt-2">
-                Results will be announced later.
-              </p>
+              <div className="bg-red-50 border-2 border-red-300 rounded-lg p-6 mb-6">
+                <p className="text-lg text-red-800 font-semibold">
+                  Your progress has been recorded and submitted to the organizers.
+                </p>
+                <p className="text-sm text-red-600 mt-2">
+                  Results will be announced later.
+                </p>
+              </div>
             </div>
           </div>
         </div>
@@ -780,85 +783,90 @@ Duration (s): ${resultData.durationSeconds}`
     const question = questions[currentQuestion];
     
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-600 to-purple-700 flex items-center justify-center p-4">
-        <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-3xl w-full">
-          <div className="mb-6">
-            <div className="flex justify-between text-sm text-gray-600 mb-2">
-              <span>Question {currentQuestion + 1} of {questions.length}</span>
-              <span className="font-semibold">⚠ Don't switch tabs!</span>
-            </div>
-            <div className="w-full bg-gray-200 rounded-full h-3">
-              <div 
-                className="bg-blue-600 h-3 rounded-full transition-all duration-300"
-                style={{width: `${((currentQuestion + 1) / questions.length) * 100}%`}}
-              />
-            </div>
-          </div>
-
-          <div className="flex items-center justify-center mb-6">
-            <Clock className={`w-8 h-8 mr-2 ${timeLeft <= 3 ? 'text-red-500' : 'text-blue-500'}`} />
-            <span className={`text-4xl font-bold ${timeLeft <= 3 ? 'text-red-500' : 'text-gray-800'}`}>
-              {timeLeft}s
-            </span>
-          </div>
-
-          <div className="bg-blue-50 rounded-lg p-6 mb-6">
-            <h3 className="text-2xl font-bold text-gray-800">
-              <span className="inline-block mr-3 text-2xl font-extrabold">{currentQuestion + 1}.</span>
-              {question.question}
-            </h3>
-          </div>
-
-          <div className="space-y-3">
-            {question.type === 'multiple' ? (
-              question.options.map((option, index) => (
-                <button
-                  key={index}
-                  onClick={() => handleAnswer(index)}
-                  disabled={showFeedback}
-                  className={`w-full p-4 text-left rounded-lg border-2 transition transform hover:scale-102 ${
-                    showFeedback
-                      ? selectedAnswer === index
-                        ? index === question.correct
-                          ? 'bg-blue-100 border-blue-500'
-                          : 'bg-gray-100 border-gray-400'
-                        : 'bg-gray-50 border-gray-300'
-                      : 'bg-white border-gray-300 hover:border-blue-500 hover:bg-blue-50'
-                  }`}
-                >
-                  <span className="font-semibold">{String.fromCharCode(65 + index)}. {option}</span>
-                </button>
-              ))
-            ) : (
-              <div className="grid grid-cols-2 gap-4">
-                <button
-                  onClick={() => handleAnswer(true)}
-                  disabled={showFeedback}
-                  className={`p-6 rounded-lg border-2 font-bold text-xl transition transform hover:scale-105 ${
-                    showFeedback
-                      ? selectedAnswer === true
-                        ? 'bg-blue-100 border-blue-500'
-                        : 'bg-gray-50 border-gray-300'
-                      : 'bg-white border-gray-300 hover:border-blue-500 hover:bg-blue-50'
-                  }`}
-                >
-                  TRUE
-                </button>
-                <button
-                  onClick={() => handleAnswer(false)}
-                  disabled={showFeedback}
-                  className={`p-6 rounded-lg border-2 font-bold text-xl transition transform hover:scale-105 ${
-                    showFeedback
-                      ? selectedAnswer === false
-                        ? 'bg-blue-100 border-blue-500'
-                        : 'bg-gray-50 border-gray-300'
-                      : 'bg-white border-gray-300 hover:border-blue-500 hover:bg-blue-50'
-                  }`}
-                >
-                  FALSE
-                </button>
+      <div className="min-h-screen bg-gradient-to-br from-blue-600 to-purple-700">
+        <Header />
+        <div className="pt-6 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-3xl w-full">
+            <div className="mb-6">
+              <div className="flex justify-between text-sm text-gray-600 mb-2">
+                {/* Removed "Question X of Y" to avoid showing numbers */}
+                <span />
+                <span className="font-semibold text-red-500">⚠ Don't switch tabs!</span>
               </div>
-            )}
+              <div className="w-full bg-gray-200 rounded-full h-3">
+                <div 
+                  className="bg-blue-600 h-3 rounded-full transition-all duration-300"
+                  style={{width: `${((currentQuestion + 1) / questions.length) * 100}%`}}
+                />
+              </div>
+            </div>
+
+            <div className="flex items-center justify-center mb-6">
+              <Clock className={`w-8 h-8 mr-2 ${timeLeft <= 3 ? 'text-red-500' : 'text-blue-500'}`} />
+              <span className={`text-4xl font-bold ${timeLeft <= 3 ? 'text-red-500' : 'text-gray-800'}`}>
+                {timeLeft}s
+              </span>
+            </div>
+
+            <div className="bg-blue-50 rounded-lg p-6 mb-6">
+              <h3 className="text-2xl font-bold text-gray-800">
+                {/* Removed the "1." number before the question */}
+                {question.question}
+              </h3>
+            </div>
+
+            <div className="space-y-3">
+              {question.type === 'multiple' ? (
+                question.options.map((option, index) => (
+                  <button
+                    key={index}
+                    onClick={() => handleAnswer(index)}
+                    disabled={showFeedback}
+                   className={`w-full p-4 text-left rounded-lg border-2 transition transform hover:scale-102 ${
+  showFeedback
+    ? selectedAnswer === index
+      ? 'bg-violet-100 border-violet-500'   // selected answer (neutral highlight)
+      : 'bg-gray-50 border-gray-300'        // other answers
+    : 'bg-white border-gray-300 hover:border-violet-400 hover:bg-violet-50'
+}`}
+
+                  >
+                    <span className="font-semibold">{String.fromCharCode(65 + index)}. {option}</span>
+                  </button>
+                ))
+              ) : (
+                <div className="grid grid-cols-2 gap-4">
+                  <button
+                    onClick={() => handleAnswer(true)}
+                    disabled={showFeedback}
+                   className={`p-6 rounded-lg border-2 font-bold text-xl transition transform hover:scale-105 ${
+  showFeedback
+    ? selectedAnswer === true
+      ? 'bg-violet-100 border-violet-500'
+      : 'bg-gray-50 border-gray-300'
+    : 'bg-white border-gray-300 hover:border-violet-400 hover:bg-violet-50'
+}`}
+
+                  >
+                    TRUE
+                  </button>
+                  <button
+                    onClick={() => handleAnswer(false)}
+                    disabled={showFeedback}
+                   className={`p-6 rounded-lg border-2 font-bold text-xl transition transform hover:scale-105 ${
+  showFeedback
+    ? selectedAnswer === false
+      ? 'bg-violet-100 border-violet-500'
+      : 'bg-gray-50 border-gray-300'
+    : 'bg-white border-gray-300 hover:border-violet-400 hover:bg-violet-50'
+}`}
+
+                  >
+                    FALSE
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>
@@ -868,25 +876,28 @@ Duration (s): ${resultData.durationSeconds}`
   // Results Screen (No Score Shown)
   if (stage === 'results') {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-600 to-purple-700 flex items-center justify-center p-4">
-        <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-2xl w-full text-center">
-          <div className="text-4xl sm:text-6xl font-extrabold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-6">
-            TECHNOHOLIC
-          </div>
+      <div className="min-h-screen bg-gradient-to-br from-blue-600 to-purple-700">
+        <Header />
+        <div className="pt-32 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-2xl w-full text-center">
+            <div className="text-4xl sm:text-6xl font-extrabold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-6">
+              TECHNOHOLIC
+            </div>
 
-          <Trophy className="w-24 h-24 mx-auto mb-4 text-blue-500" />
-          <h2 className="text-2xl sm:text-4xl font-bold text-gray-800 mb-4">Response Submitted!</h2>
-          
-          <div className="bg-gradient-to-r from-blue-500 to-purple-500 text-white py-8 px-6 rounded-xl mb-6">
-            <CheckCircle className="w-16 h-16 mx-auto mb-4" />
-            <p className="text-2xl font-semibold">Thank you for participating!</p>
-            <p className="text-sm mt-4">Your responses have been submitted successfully.</p>
-            <p className="text-sm">Results will be announced shortly on the official platform.</p>
+            <Trophy className="w-24 h-24 mx-auto mb-4 text-blue-500" />
+            <h2 className="text-2xl sm:text-4xl font-bold text-gray-800 mb-4">Response Submitted!</h2>
+            
+            <div className="bg-gradient-to-r from-blue-500 to-purple-500 text-white py-8 px-6 rounded-xl mb-6">
+              <CheckCircle className="w-16 h-16 mx-auto mb-4" />
+              <p className="text-2xl font-semibold">Thank you for participating!</p>
+              <p className="text-sm mt-4">Your responses have been submitted successfully.</p>
+              <p className="text-sm">Results will be announced shortly on the official platform.</p>
+            </div>
           </div>
-          
-          {/* Email confirmation message removed per request */}
         </div>
       </div>
-);
-}
+    );
+  }
+
+  return null;
 }
