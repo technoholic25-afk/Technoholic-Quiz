@@ -803,6 +803,22 @@ Duration (s): ${resultData.durationSeconds}`
               <p className="text-red-800 font-semibold">⚠ WARNING: Switching tabs will automatically terminate your quiz!</p>
             </div>
 
+            <button
+              onClick={() => {
+                if (canStartQuiz && !quizEnded) {
+                  setShuffledQuestions(buildShuffledQuestions());
+                  setStage('quiz');
+                }
+              }}
+              disabled={!canStartQuiz || quizEnded}
+              className={`w-full font-bold py-4 rounded-lg text-xl my-3 transition transform ${
+                (canStartQuiz && !quizEnded)
+                  ? 'bg-green-600 hover:bg-green-700 text-white hover:scale-105'
+                  : 'bg-gray-400 text-gray-200 cursor-not-allowed '
+              }`}
+            >
+              {quizEnded ? 'Quiz Ended' : (canStartQuiz ? 'I Understand - Start Quiz' : 'Waiting for Quiz Time...')}
+            </button>
             {/* Back button to Registration */}
             <button
               type="button"
@@ -812,22 +828,6 @@ Duration (s): ${resultData.durationSeconds}`
               ⬅ Back to Registration
             </button>
             
-            <button
-              onClick={() => {
-                if (canStartQuiz && !quizEnded) {
-                  setShuffledQuestions(buildShuffledQuestions());
-                  setStage('quiz');
-                }
-              }}
-              disabled={!canStartQuiz || quizEnded}
-              className={`w-full font-bold py-4 rounded-lg text-xl transition transform ${
-                (canStartQuiz && !quizEnded)
-                  ? 'bg-green-600 hover:bg-green-700 text-white hover:scale-105'
-                  : 'bg-gray-400 text-gray-200 cursor-not-allowed'
-              }`}
-            >
-              {quizEnded ? 'Quiz Ended' : (canStartQuiz ? 'I Understand - Start Quiz' : 'Waiting for Quiz Time...')}
-            </button>
           </div>
         </div>
       </div>
