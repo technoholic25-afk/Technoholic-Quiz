@@ -8,15 +8,20 @@ const CONFIG = {
   // Quiz Start Time (24-hour format: HH:MM)
   QUIZ_START_TIME: '10:36', // Example: 2:00 PM
   QUIZ_START_DATE: '2025-11-29', // Format: YYYY-MM-DD
+
   // Quiz End Time - after this datetime site will stop accepting responses
   QUIZ_END_TIME: '11:40', // 24-hour format HH:MM
   QUIZ_END_DATE: '2025-12-09', // Format: YYYY-MM-DD
   
-  // Google Sheets Integration (Google Apps Script URL)
+  // 1) EXISTING: Google Apps Script URL for SAVING RESULTS
   GOOGLE_SHEET_URL: 'https://script.google.com/macros/s/AKfycbzX6n4pnfJ9mZQ5w8gD7rSD2fHwTeKVU07teOuXL3hBEBLz25cmIoVBHI9-KZs35EjV/exec',
+
+  // 2) NEW: Google Apps Script URL for VALIDATING PARTICIPANTS
+  //    ➜ This should be the Web App URL of the script that has action=verify and reads BrainBoltParticipants
+  PARTICIPANT_VERIFY_URL: 'https://script.google.com/macros/s/AKfycbx98CmtGyfdXTR_52bC2m6MGjPXgl21OKk9JLSm4l2mwUmRO9qc2DuHwbhB7sL80BpC0w/exec',
   
   // Web3forms Integration (keep your access key)
- // WEB3FORMS_ACCESS_KEY: 'c3ccd999-fdc3-49b1-a3b9-87e95da597fa',
+  // WEB3FORMS_ACCESS_KEY: 'c3ccd999-fdc3-49b1-a3b9-87e95da597fa',
   
   // Quiz Settings
   TIME_PER_QUESTION: 15 // seconds
@@ -90,8 +95,10 @@ export default function BrainBoltQuiz() {
   const [registeredEmails, setRegisteredEmails] = useState(new Set());
   const [alreadyCompleted, setAlreadyCompleted] = useState(false);
   const [shuffledQuestions, setShuffledQuestions] = useState(null);
-  
   const [quizStartTime, setQuizStartTime] = useState(null);
+
+  // NEW: loader for "Verifying participant..."
+  const [isValidatingParticipant, setIsValidatingParticipant] = useState(false);
   
   const visibilityRef = useRef(true);
   const submissionLock = useRef(false);
@@ -109,6 +116,7 @@ export default function BrainBoltQuiz() {
       if (savedCompleted) {
         const arr = JSON.parse(savedCompleted);
         const emails = arr.map(e => e.toLowerCase());
+        // you can use emails if needed
       }
     } catch (e) {
       console.warn('Failed to load emails from localStorage', e);
@@ -275,17 +283,14 @@ export default function BrainBoltQuiz() {
 
   // Build shuffled questions *and* shuffled options for each participant
   const buildShuffledQuestions = () => {
-    // 1) Shuffle the question order
     const shuffledQuestionOrder = shuffleArray(QUIZ_QUESTIONS);
 
-    // 2) For each question, shuffle its options and recompute the correct index
     return shuffledQuestionOrder.map((q) => {
       if (q.type !== 'multiple' || !q.options) return q;
 
       const origOptions = q.options.slice();
       const shuffledOpts = shuffleArray(origOptions);
 
-      // Determine the correct option value robustly.
       let correctValue = null;
       if (typeof q.correct === 'number' && origOptions[q.correct] !== undefined) {
         correctValue = origOptions[q.correct];
@@ -299,10 +304,8 @@ export default function BrainBoltQuiz() {
         correctValue = origOptions[0];
       }
 
-      // Find the new index of the correct option in the shuffled array.
       let newCorrectIndex = shuffledOpts.findIndex(o => o === correctValue);
 
-      // Try a trimmed-string match as a robust fallback.
       if (newCorrectIndex === -1 && typeof correctValue === 'string') {
         const trimmed = correctValue.trim();
         newCorrectIndex = shuffledOpts.findIndex(o => typeof o === 'string' && o.trim() === trimmed);
@@ -360,7 +363,64 @@ export default function BrainBoltQuiz() {
     }
   }, [quizTerminated, stage]);
 
-  const handleRegistration = () => {
+  // 🔹 NEW: validate participant using PARTICIPANT_VERIFY_URL (your BrainBoltParticipants script)
+  const validateParticipantOnSheet = async (participantData) => {
+    try {
+      setIsValidatingParticipant(true);
+
+      const params = new URLSearchParams({
+        action: 'verify',
+        name: participantData.name.trim(),
+        email: participantData.email.trim(),
+        phone: participantData.phone.trim()
+      });
+
+      const response = await fetch(`${CONFIG.PARTICIPANT_VERIFY_URL}?${params.toString()}`, {
+        method: 'GET'
+      });
+
+      if (!response.ok) {
+        console.error('Verification request failed with status', response.status);
+        return {
+          verified: false,
+          message: 'Unable to verify registration. Please contact the organizers.'
+        };
+      }
+
+      const data = await response.json().catch(() => null);
+
+      if (!data || data.status !== 'success') {
+        return {
+          verified: false,
+          message: data?.message || 'Verification failed. Please contact the organizers.'
+        };
+      }
+
+      if (!data.verified) {
+        return {
+          verified: false,
+          message: data.message || 'You are not a registered participant.'
+        };
+      }
+
+      return {
+        verified: true,
+        participant: data.participant,
+        message: data.message || 'Verified successfully'
+      };
+    } catch (error) {
+      console.error('Error validating participant:', error);
+      return {
+        verified: false,
+        message: 'Network error while verifying. Please try again or contact the organizers.'
+      };
+    } finally {
+      setIsValidatingParticipant(false);
+    }
+  };
+
+  // 🔹 UPDATED: Registration handler, logic same + validation gate
+  const handleRegistration = async () => {
     if (!participant.name || !participant.college || !participant.email || !participant.phone) {
       alert('Please fill in all required fields');
       return;
@@ -389,6 +449,13 @@ export default function BrainBoltQuiz() {
 
     if (quizEnded) {
       alert('The quiz has already ended and registration is closed.');
+      return;
+    }
+
+    // ✅ NEW: validate against BrainBoltParticipants sheet
+    const verification = await validateParticipantOnSheet(participant);
+    if (!verification.verified) {
+      alert(verification.message || 'You are not a registered participant of BrainBolt.');
       return;
     }
 
@@ -487,6 +554,7 @@ export default function BrainBoltQuiz() {
         data: resultData
       });
 
+      // ⬇️ still using GOOGLE_SHEET_URL for saving results (unchanged)
       await fetch(CONFIG.GOOGLE_SHEET_URL, {
         method: 'POST',
         mode: 'no-cors',
@@ -685,9 +753,14 @@ Duration (s): ${resultData.durationSeconds}`
               </div>
               <button
                 onClick={handleRegistration}
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg transition transform hover:scale-105"
+                disabled={isValidatingParticipant}
+                className={`w-full font-bold py-3 rounded-lg transition transform hover:scale-105 ${
+                  isValidatingParticipant
+                    ? 'bg-gray-400 text-gray-200 cursor-not-allowed'
+                    : 'bg-blue-600 hover:bg-blue-700 text-white'
+                }`}
               >
-                Continue to Rules
+                {isValidatingParticipant ? 'Verifying participant…' : 'Continue to Rules'}
               </button>
             </div>
           </div>
@@ -810,7 +883,6 @@ Duration (s): ${resultData.durationSeconds}`
 
             <div className="bg-blue-50 rounded-lg p-6 mb-6">
               <h3 className="text-2xl font-bold text-gray-800">
-                {/* Removed the "1." number before the question */}
                 {question.question}
               </h3>
             </div>
@@ -822,14 +894,13 @@ Duration (s): ${resultData.durationSeconds}`
                     key={index}
                     onClick={() => handleAnswer(index)}
                     disabled={showFeedback}
-                   className={`w-full p-4 text-left rounded-lg border-2 transition transform hover:scale-102 ${
-  showFeedback
-    ? selectedAnswer === index
-      ? 'bg-violet-100 border-violet-500'   // selected answer (neutral highlight)
-      : 'bg-gray-50 border-gray-300'        // other answers
-    : 'bg-white border-gray-300 hover:border-violet-400 hover:bg-violet-50'
-}`}
-
+                    className={`w-full p-4 text-left rounded-lg border-2 transition transform hover:scale-102 ${
+                      showFeedback
+                        ? selectedAnswer === index
+                          ? 'bg-violet-100 border-violet-500'
+                          : 'bg-gray-50 border-gray-300'
+                        : 'bg-white border-gray-300 hover:border-violet-400 hover:bg-violet-50'
+                    }`}
                   >
                     <span className="font-semibold">{String.fromCharCode(65 + index)}. {option}</span>
                   </button>
@@ -839,28 +910,26 @@ Duration (s): ${resultData.durationSeconds}`
                   <button
                     onClick={() => handleAnswer(true)}
                     disabled={showFeedback}
-                   className={`p-6 rounded-lg border-2 font-bold text-xl transition transform hover:scale-105 ${
-  showFeedback
-    ? selectedAnswer === true
-      ? 'bg-violet-100 border-violet-500'
-      : 'bg-gray-50 border-gray-300'
-    : 'bg-white border-gray-300 hover:border-violet-400 hover:bg-violet-50'
-}`}
-
+                    className={`p-6 rounded-lg border-2 font-bold text-xl transition transform hover:scale-105 ${
+                      showFeedback
+                        ? selectedAnswer === true
+                          ? 'bg-violet-100 border-violet-500'
+                          : 'bg-gray-50 border-gray-300'
+                        : 'bg-white border-gray-300 hover:border-violet-400 hover:bg-violet-50'
+                    }`}
                   >
                     TRUE
                   </button>
                   <button
                     onClick={() => handleAnswer(false)}
                     disabled={showFeedback}
-                   className={`p-6 rounded-lg border-2 font-bold text-xl transition transform hover:scale-105 ${
-  showFeedback
-    ? selectedAnswer === false
-      ? 'bg-violet-100 border-violet-500'
-      : 'bg-gray-50 border-gray-300'
-    : 'bg-white border-gray-300 hover:border-violet-400 hover:bg-violet-50'
-}`}
-
+                    className={`p-6 rounded-lg border-2 font-bold text-xl transition transform hover:scale-105 ${
+                      showFeedback
+                        ? selectedAnswer === false
+                          ? 'bg-violet-100 border-violet-500'
+                          : 'bg-gray-50 border-gray-300'
+                        : 'bg-white border-gray-300 hover:border-violet-400 hover:bg-violet-50'
+                    }`}
                   >
                     FALSE
                   </button>
