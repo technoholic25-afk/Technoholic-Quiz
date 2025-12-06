@@ -13,11 +13,10 @@ const CONFIG = {
   QUIZ_END_TIME: '11:40', // 24-hour format HH:MM
   QUIZ_END_DATE: '2025-12-09', // Format: YYYY-MM-DD
   
-  // 1) EXISTING: Google Apps Script URL for SAVING RESULTS
+  // 1) Google Apps Script URL for SAVING RESULTS
   GOOGLE_SHEET_URL: 'https://script.google.com/macros/s/AKfycbzX6n4pnfJ9mZQ5w8gD7rSD2fHwTeKVU07teOuXL3hBEBLz25cmIoVBHI9-KZs35EjV/exec',
 
-  // 2) NEW: Google Apps Script URL for VALIDATING PARTICIPANTS
-  //    ➜ This should be the Web App URL of the script that has action=verify and reads BrainBoltParticipants
+  // 2) Google Apps Script URL for VALIDATING PARTICIPANTS
   PARTICIPANT_VERIFY_URL: 'https://script.google.com/macros/s/AKfycbx98CmtGyfdXTR_52bC2m6MGjPXgl21OKk9JLSm4l2mwUmRO9qc2DuHwbhB7sL80BpC0w/exec',
   
   // Web3forms Integration (keep your access key)
@@ -92,52 +91,28 @@ export default function BrainBoltQuiz() {
   const [timeUntilStart, setTimeUntilStart] = useState('');
   const [canStartQuiz, setCanStartQuiz] = useState(false);
   const [quizEnded, setQuizEnded] = useState(false);
-  const [registeredEmails, setRegisteredEmails] = useState(new Set());
   const [alreadyCompleted, setAlreadyCompleted] = useState(false);
   const [shuffledQuestions, setShuffledQuestions] = useState(null);
   const [quizStartTime, setQuizStartTime] = useState(null);
 
-  // NEW: loader for "Verifying participant..."
+  // loader for "Verifying participant..."
   const [isValidatingParticipant, setIsValidatingParticipant] = useState(false);
   
   const visibilityRef = useRef(true);
   const submissionLock = useRef(false);
 
-  // Load registered and completed emails from localStorage on mount
+  // Load completed emails from localStorage on mount
   useEffect(() => {
     try {
-      const savedRegistered = localStorage.getItem('registeredEmails');
-      if (savedRegistered) {
-        const arr = JSON.parse(savedRegistered);
-        setRegisteredEmails(new Set(arr.map(e => e.toLowerCase())));
-      }
-
       const savedCompleted = localStorage.getItem('completedEmails');
       if (savedCompleted) {
-        const arr = JSON.parse(savedCompleted);
-        const emails = arr.map(e => e.toLowerCase());
-        // you can use emails if needed
+        // we don't strictly need to store them into state now
+        JSON.parse(savedCompleted).map(e => e.toLowerCase());
       }
     } catch (e) {
-      console.warn('Failed to load emails from localStorage', e);
+      console.warn('Failed to load completedEmails from localStorage', e);
     }
   }, []);
-
-  // Save registered email
-  const saveRegisteredEmail = (email) => {
-    if (!email) return;
-    try {
-      const emailLower = email.toLowerCase();
-      const current = JSON.parse(localStorage.getItem('registeredEmails') || '[]');
-      if (!current.includes(emailLower)) {
-        current.push(emailLower);
-        localStorage.setItem('registeredEmails', JSON.stringify(current));
-      }
-      setRegisteredEmails(prev => new Set(prev).add(emailLower));
-    } catch (e) {
-      console.warn('Could not save registeredEmails to localStorage', e);
-    }
-  };
 
   // Save completed email (after successful submission)
   const saveCompletedEmail = (email) => {
@@ -170,12 +145,10 @@ export default function BrainBoltQuiz() {
     const checkQuizTimes = () => {
       const now = new Date();
 
-      // build start datetime
       const [sh, sm] = CONFIG.QUIZ_START_TIME.split(':');
       const quizStart = new Date(CONFIG.QUIZ_START_DATE);
       quizStart.setHours(parseInt(sh, 10), parseInt(sm, 10), 0, 0);
 
-      // build end datetime
       const [eh, em] = CONFIG.QUIZ_END_TIME.split(':');
       const quizEnd = new Date(CONFIG.QUIZ_END_DATE);
       quizEnd.setHours(parseInt(eh, 10), parseInt(em, 10), 0, 0);
@@ -363,7 +336,25 @@ export default function BrainBoltQuiz() {
     }
   }, [quizTerminated, stage]);
 
-  // 🔹 NEW: validate participant using PARTICIPANT_VERIFY_URL (your BrainBoltParticipants script)
+  // Auto-close "Already Participated" screen after 7s
+  useEffect(() => {
+    if (alreadyCompleted) {
+      const t = setTimeout(() => {
+        try {
+          window.close();
+        } catch (e) {
+          // ignored
+        }
+        resetQuizState();
+        setAlreadyCompleted(false);
+        setParticipant({ name: '', college: '', email: '', phone: '' });
+        setStage('welcome');
+      }, 7000);
+      return () => clearTimeout(t);
+    }
+  }, [alreadyCompleted]);
+
+  // validate participant using PARTICIPANT_VERIFY_URL
   const validateParticipantOnSheet = async (participantData) => {
     try {
       setIsValidatingParticipant(true);
@@ -419,7 +410,7 @@ export default function BrainBoltQuiz() {
     }
   };
 
-  // 🔹 UPDATED: Registration handler, logic same + validation gate
+  // Registration handler
   const handleRegistration = async () => {
     if (!participant.name || !participant.college || !participant.email || !participant.phone) {
       alert('Please fill in all required fields');
@@ -452,7 +443,7 @@ export default function BrainBoltQuiz() {
       return;
     }
 
-    // ✅ NEW: validate against BrainBoltParticipants sheet
+    // validate against BrainBoltParticipants sheet
     const verification = await validateParticipantOnSheet(participant);
     if (!verification.verified) {
       alert(verification.message || 'You are not a registered participant of BrainBolt.');
@@ -461,18 +452,13 @@ export default function BrainBoltQuiz() {
 
     const emailLower = participant.email.toLowerCase();
 
+    // now ONLY block if quiz is already completed
     if (isEmailCompleted(emailLower)) {
       alert('This email has already completed the quiz. You cannot take it again.');
       setAlreadyCompleted(true);
       return;
     }
 
-    if (registeredEmails.has(emailLower)) {
-      alert('This email has already been registered. You cannot register twice.');
-      return;
-    }
-
-    saveRegisteredEmail(emailLower);
     setStage('rules');
   };
 
@@ -554,7 +540,6 @@ export default function BrainBoltQuiz() {
         data: resultData
       });
 
-      // ⬇️ still using GOOGLE_SHEET_URL for saving results (unchanged)
       await fetch(CONFIG.GOOGLE_SHEET_URL, {
         method: 'POST',
         mode: 'no-cors',
@@ -637,6 +622,9 @@ Duration (s): ${resultData.durationSeconds}`
                 If you believe this is an error, please contact the organizers.
               </p>
             </div>
+            <p className="text-sm text-gray-500">
+              This screen will close automatically.
+            </p>
           </div>
         </div>
       </div>
@@ -762,6 +750,18 @@ Duration (s): ${resultData.durationSeconds}`
               >
                 {isValidatingParticipant ? 'Verifying participant…' : 'Continue to Rules'}
               </button>
+
+              {/* Back button to go to Welcome */}
+              <button
+                type="button"
+                onClick={() => {
+                  setParticipant({ name: '', college: '', email: '', phone: '' });
+                  setStage('welcome');
+                }}
+                className="w-full mt-2 bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-2 rounded-lg transition"
+              >
+                ⬅ Back to Welcome
+              </button>
             </div>
           </div>
         </div>
@@ -802,6 +802,15 @@ Duration (s): ${resultData.durationSeconds}`
             <div className="bg-red-50 border-l-4 border-red-500 p-4 mb-6">
               <p className="text-red-800 font-semibold">⚠ WARNING: Switching tabs will automatically terminate your quiz!</p>
             </div>
+
+            {/* Back button to Registration */}
+            <button
+              type="button"
+              onClick={() => setStage('registration')}
+              className="w-full mb-3 bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-3 rounded-lg transition"
+            >
+              ⬅ Back to Registration
+            </button>
             
             <button
               onClick={() => {
@@ -862,7 +871,6 @@ Duration (s): ${resultData.durationSeconds}`
           <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-3xl w-full">
             <div className="mb-6">
               <div className="flex justify-between text-sm text-gray-600 mb-2">
-                {/* Removed "Question X of Y" to avoid showing numbers */}
                 <span />
                 <span className="font-semibold text-red-500">⚠ Don't switch tabs!</span>
               </div>
