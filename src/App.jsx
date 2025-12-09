@@ -6,11 +6,11 @@ import { Clock, CheckCircle, Trophy, Mail, User, Building, Phone, AlertTriangle 
 // ============================================
 const CONFIG = {
   // Quiz Start Time (24-hour format: HH:MM)
-  QUIZ_START_TIME: '09:07', // Example: 2:00 PM
+  QUIZ_START_TIME: '12:48', // Example: 2:00 PM
   QUIZ_START_DATE: '2025-12-09', // Format: YYYY-MM-DD
 
   // Quiz End Time - after this datetime site will stop accepting responses
-  QUIZ_END_TIME: '09:30', // 24-hour format HH:MM
+  QUIZ_END_TIME: '13:55', // 24-hour format HH:MM
   QUIZ_END_DATE: '2025-12-09', // Format: YYYY-MM-DD
   
   // 1) Google Apps Script URL for SAVING RESULTS
@@ -28,21 +28,21 @@ const CONFIG = {
 
 // Quiz Questions
 const QUIZ_QUESTIONS = [
-  { id: 1, question: "Fake news damages democracy. What Gen-AI solution fits best?", type: "multiple", options: ["Real-time misinformation detection model", "Meme generators", "Offline rumor chain", "SMS propaganda"], correct: 0 },
-  { id: 2, question: "Corruption in municipal approvals reduces when:", type: "multiple", options: ["AI evaluates files with digital tracking trails", "Offices stay closed", "All approvals verbal", "No application required"], correct: 0 },
-  { id: 3, question: "Civics fails when court judgments are too complex. Gen-AI helps by:", type: "multiple", options: ["Auto-creating readable summaries for citizens", "Banning public access", "Encrypting legal files", "Hiding case history"], correct: 0 },
-  { id: 4, question: "Duplicate voter identity is a major civic flaw. Gen-AI helps by:", type: "multiple", options: ["Automated document verification", "Increasing voting age", "Removing ID cards", "Offline booth lists"], correct: 0 },
-  { id: 5, question: "Bribery in tender selection is a chronic governance failure. AI fixes by:", type: "multiple", options: ["Scored, automated tender evaluation", "Handwritten bidding", "Verbal assessments only", "Removing digital records"], correct: 0 },
-  { id: 6, question: "When RTI requests pile up, the civic system fails. Best AI fix:", type: "multiple", options: ["Auto-sorting + auto-summary of RTI queries", "Eliminate RTI", "File locking", "Delay replies"], correct: 0 },
-  { id: 7, question: "Judicial overload slows justice. Gen-AI reduces delay by:", type: "multiple", options: ["Case-priority recommendation engines", "Closing courts early", "Deleting old files", "Random scheduling"], correct: 0 },
-  { id: 8, question: "Lack of public awareness about laws is civic failure. AI solves via:", type: "multiple", options: ["Multi-language policy explanation generation", "English-only publishing", "Sealed bills", "Legal secrecy"], correct: 0 },
-  { id: 9, question: "Gen-AI can prevent subsidy fraud by:", type: "multiple", options: ["Biometric identity matching + anomaly detection", "Verbal approval only", "Paper-based tracking", "Manual signature matching"], correct: 0 },
-  { id: 10, question: "Corruption grows when govt data is unstructured. Gen-AI solves by:", type: "multiple", options: ["Converting raw data to readable structured insights", "Deleting datasets", "Offline filing", "Password-locked PDFs only"], correct: 0 },
-  { id: 11, question: "Poor grievance response is governance failure. AI improves by:", type: "multiple", options: ["Citizen-assist chatbots + query tracking", "Closing helplines", "Delayed email replies", "Manual tokens"], correct: 0 },
-  { id: 12, question: "Transparent public spending improves when AI:", type: "multiple", options: ["Generates anomaly-flagged financial reports", "Hides transaction logs", "Removes audit trails", "Allows no digital trace"], correct: 0 },
-  { id: 13, question: "Election misinformation is civic breakdown. The Gen-AI counter-tools?", type: "multiple", options: ["AI fact-checking + deepfake detection", "Baseless viral ads", "Anonymous influence chains", "One-sided propaganda"], correct: 0 },
-  { id: 14, question: "Failure in policy understanding can be fixed using AI-based:", type: "multiple", options: ["Simplified bill explanation models", "Technical documents only", "Handwritten notes", "No publication"], correct: 0 },
-  { id: 15, question: "Poor police case processing is civic inefficiency. AI reduces it by:", type: "multiple", options: ["FIR auto-drafting + crime-pattern prediction", "Verbal reporting only", "Manual notebooks", "No digital log"], correct: 0 },
+  { id: 1, question: "Which scenario BEST illustrates a structural digital civics failure involving generative AI?", type: "multiple", options: ["A student using AI to summarize a textbook", "A government deploying an AI system without public consultation", "A chatbot giving incorrect movie recommendations", "A user forgetting to log out of an account"], correct: 1 },
+  { id: 2, question: "A major challenge with regulating large language models is that:", type: "multiple", options: ["They are too small to audit", "They can behave unpredictably due to emergent properties", "They do not require data to learn", "Their outputs are always deterministic"], correct: 1 },
+  { id: 3, question: "Which of the following BEST reflects the \"black box\" problem in AI governance?", type: "multiple", options: ["Users can modify source code freely", "Model decisions are difficult to interpret or trace", "The model uses open-source training data", "The system publishes full transparency reports"], correct: 1 },
+  { id: 4, question: "When an AI model amplifies toxic content because it optimizes engagement metrics, this represents a failure in:", type: "multiple", options: ["Hardware constraints", "Algorithmic alignment", "Data labeling", "Model compression"], correct: 1 },
+  { id: 5, question: "A deepfake that influences public opinion ahead of an election primarily threatens which democratic pillar?", type: "multiple", options: ["Participatory budgeting", "Informed citizen decision-making", "Infrastructure resilience", "Judicial review"], correct: 1 },
+  { id: 6, question: "Which of the following is a latent risk of generative AI in civic spaces?", type: "multiple", options: ["Increased productivity", "Formation of AI-generated echo chambers", "Faster writing", "Larger datasets"], correct: 1 },
+  { id: 7, question: "What is the core difficulty of enforcing accountability in AI systems deployed across multiple jurisdictions?", type: "multiple", options: ["Shared computational resources", "Divergent legal frameworks and regulatory standards", "Lack of technical support", "Uniformity of global ethics"], correct: 1 },
+  { id: 8, question: "A civic failure occurs when an AI-powered welfare system wrongfully denies benefits due to biased training data. This best demonstrates:", type: "multiple", options: ["Bias transfer from data to decision", "Hyperparameter tuning error", "Model recalibration", "Edge-case overfitting"], correct: 0 },
+  { id: 9, question: "Which concept focuses on ensuring AI outputs respect human agency and autonomy?", type: "multiple", options: ["Synthetic data generation", "Algorithmic self-governance", "Human-centered design", "Model distillation"], correct: 2 },
+  { id: 10, question: "When AI-generated misinformation spreads faster than civic institutions can respond, this results in:", type: "multiple", options: ["Information asymmetry", "Data equilibrium", "Semantic coherence", "Content sparsity"], correct: 0 },
+  { id: 11, question: "What makes generative AI especially dangerous in political microtargeting?", type: "multiple", options: ["It can operate without electricity", "It personalizes persuasive content at scale", "It eliminates all user data", "It cannot analyze browsing patterns"], correct: 1 },
+  { id: 12, question: "A model that unintentionally reveals training data during outputs violates which core principle?", type: "multiple", options: ["Data minimization", "Explainability", "Federated learning", "Multi-modal processing"], correct: 0 },
+  { id: 13, question: "Value alignmentfailures occur when:", type: "multiple", options: ["AI produces outputs inconsistent with human ethical norms", "Model accuracy increases over time", "Data is properly anonymized", "The system includes diverse training sets"], correct: 0 },
+  { id: 14, question: "Which mechanism MOST effectively reduces risk from AI-generated civic misinformation?", type: "multiple", options: ["Closed-source development", "Slow inference times", "Traceable provenance and watermarking", "Removing content moderation"], correct: 2 },
+  { id: 15, question: "A government relying solely on proprietary AI tools for decision-making risks:", type: "multiple", options: ["Increased transparency", "Vendor lock-in and opaque governance", "Improved public trust", "Enhanced civic participation"], correct: 1 },
   { id: 16, question: "Election fraud control improves through:", type: "multiple", options: ["AI ballot-image verification", "Offline counting only", "SMS-voting without tracking", "No audit system"], correct: 0 },
   { id: 17, question: "Digital tender transparency increases when AI:", type: "multiple", options: ["Generates corruption-risk scorecards", "Marks tenders confidential", "Removes public dashboards", "Deletes logs"], correct: 0 },
   { id: 18, question: "Slow disaster response is government failure. AI solution?", type: "multiple", options: ["Real-time crisis modelling + predictive alerts", "Post-event paperwork", "Manual coordination", "Random announcements"], correct: 0 },
