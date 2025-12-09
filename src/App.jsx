@@ -6,18 +6,18 @@ import { Clock, CheckCircle, Trophy, Mail, User, Building, Phone, AlertTriangle 
 // ============================================
 const CONFIG = {
   // Quiz Start Time (24-hour format: HH:MM)
-  QUIZ_START_TIME: '10:36', // Example: 2:00 PM
-  QUIZ_START_DATE: '2025-11-29', // Format: YYYY-MM-DD
+  QUIZ_START_TIME: '09:07', // Example: 2:00 PM
+  QUIZ_START_DATE: '2025-12-09', // Format: YYYY-MM-DD
 
   // Quiz End Time - after this datetime site will stop accepting responses
-  QUIZ_END_TIME: '11:40', // 24-hour format HH:MM
+  QUIZ_END_TIME: '09:30', // 24-hour format HH:MM
   QUIZ_END_DATE: '2025-12-09', // Format: YYYY-MM-DD
   
   // 1) Google Apps Script URL for SAVING RESULTS
   GOOGLE_SHEET_URL: 'https://script.google.com/macros/s/AKfycbzX6n4pnfJ9mZQ5w8gD7rSD2fHwTeKVU07teOuXL3hBEBLz25cmIoVBHI9-KZs35EjV/exec',
 
   // 2) Google Apps Script URL for VALIDATING PARTICIPANTS
-  PARTICIPANT_VERIFY_URL: 'https://script.google.com/macros/s/AKfycbx98CmtGyfdXTR_52bC2m6MGjPXgl21OKk9JLSm4l2mwUmRO9qc2DuHwbhB7sL80BpC0w/exec',
+  PARTICIPANT_VERIFY_URL: 'https://script.google.com/macros/s/AKfycbxYDyd3OnhejocsUMQUHrUuG2_Ps0OI2wuhiF-_ynKWiRwIrJQe0f358SkufdZcZe9zbA/exec',
   
   // Web3forms Integration (keep your access key)
   // WEB3FORMS_ACCESS_KEY: 'c3ccd999-fdc3-49b1-a3b9-87e95da597fa',
