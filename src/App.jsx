@@ -10,8 +10,8 @@ const CONFIG = {
   QUIZ_START_DATE: '2025-12-10', // Format: YYYY-MM-DD
 
   // Quiz End Time - after this datetime site will stop accepting responses
-  QUIZ_END_TIME: '13:55', // 24-hour format HH:MM
-  QUIZ_END_DATE: '2025-12-09', // Format: YYYY-MM-DD
+  QUIZ_END_TIME: '13:00', // 24-hour format HH:MM
+  QUIZ_END_DATE: '2025-12-11', // Format: YYYY-MM-DD
   
   // 1) Google Apps Script URL for SAVING RESULTS
   GOOGLE_SHEET_URL: 'https://script.google.com/macros/s/AKfycbzX6n4pnfJ9mZQ5w8gD7rSD2fHwTeKVU07teOuXL3hBEBLz25cmIoVBHI9-KZs35EjV/exec',
