@@ -6,7 +6,7 @@ import { Clock, CheckCircle, Trophy, Mail, User, Building, Phone, AlertTriangle 
 // ============================================
 const CONFIG = {
   // Quiz Start Time (24-hour format: HH:MM)
-  QUIZ_START_TIME: '20:48', // Example: 2:00 PM
+  QUIZ_START_TIME: '20:51', // Example: 2:00 PM
   QUIZ_START_DATE: '2025-12-10', // Format: YYYY-MM-DD
 
   // Quiz End Time - after this datetime site will stop accepting responses
@@ -20,7 +20,7 @@ const CONFIG = {
   PARTICIPANT_VERIFY_URL: 'https://script.google.com/macros/s/AKfycbxYDyd3OnhejocsUMQUHrUuG2_Ps0OI2wuhiF-_ynKWiRwIrJQe0f358SkufdZcZe9zbA/exec',
   
   // Web3forms Integration (keep your access key)
-  // WEB3FORMS_ACCESS_KEY: 'c3ccd999-fdc3-49b1-a3b9-87e95da597fa',
+   WEB3FORMS_ACCESS_KEY: 'c3ccd999-fdc3-49b1-a3b9-87e95da597fa',
   
   // Quiz Settings
   TIME_PER_QUESTION: 15 // seconds
