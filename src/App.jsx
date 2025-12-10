@@ -6,8 +6,8 @@ import { Clock, CheckCircle, Trophy, Mail, User, Building, Phone, AlertTriangle 
 // ============================================
 const CONFIG = {
   // Quiz Start Time (24-hour format: HH:MM)
-  QUIZ_START_TIME: '12:48', // Example: 2:00 PM
-  QUIZ_START_DATE: '2025-12-09', // Format: YYYY-MM-DD
+  QUIZ_START_TIME: '20:48', // Example: 2:00 PM
+  QUIZ_START_DATE: '2025-12-10', // Format: YYYY-MM-DD
 
   // Quiz End Time - after this datetime site will stop accepting responses
   QUIZ_END_TIME: '13:55', // 24-hour format HH:MM
