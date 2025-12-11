@@ -6,8 +6,8 @@ import { Clock, CheckCircle, Trophy, Mail, User, Building, Phone, AlertTriangle 
 // ============================================
 const CONFIG = {
   // Quiz Start Time (24-hour format: HH:MM)
-  QUIZ_START_TIME: '20:51', // Example: 2:00 PM
-  QUIZ_START_DATE: '2025-12-10', // Format: YYYY-MM-DD
+  QUIZ_START_TIME: '12:48', // Example: 2:00 PM
+  QUIZ_START_DATE: '2025-12-09', // Format: YYYY-MM-DD
 
   // Quiz End Time - after this datetime site will stop accepting responses
   QUIZ_END_TIME: '13:00', // 24-hour format HH:MM
@@ -17,7 +17,7 @@ const CONFIG = {
   GOOGLE_SHEET_URL: 'https://script.google.com/macros/s/AKfycbzX6n4pnfJ9mZQ5w8gD7rSD2fHwTeKVU07teOuXL3hBEBLz25cmIoVBHI9-KZs35EjV/exec',
 
   // 2) Google Apps Script URL for VALIDATING PARTICIPANTS
-  PARTICIPANT_VERIFY_URL: 'https://script.google.com/macros/s/AKfycbxYDyd3OnhejocsUMQUHrUuG2_Ps0OI2wuhiF-_ynKWiRwIrJQe0f358SkufdZcZe9zbA/exec',
+  PARTICIPANT_VERIFY_URL: 'https://script.google.com/macros/s/AKfycbxX-YfFBXmrvdZ5eNdaBr8n_8TXQJpPfkJ1OhQhxcm8w7gUI5QrBCZptWv5Na-gQYyD/exec',
   
   // Web3forms Integration (keep your access key)
    WEB3FORMS_ACCESS_KEY: 'c3ccd999-fdc3-49b1-a3b9-87e95da597fa',
@@ -370,15 +370,33 @@ export default function BrainBoltQuiz() {
         method: 'GET'
       });
 
+      console.log('Verification URL:', `${CONFIG.PARTICIPANT_VERIFY_URL}?${params.toString()}`);
+      console.log('Response status:', response.status);
+      console.log('Response headers:', response.headers);
+
       if (!response.ok) {
         console.error('Verification request failed with status', response.status);
+        const text = await response.text();
+        console.error('Response text:', text);
         return {
           verified: false,
           message: 'Unable to verify registration. Please contact the organizers.'
         };
       }
 
-      const data = await response.json().catch(() => null);
+      const responseText = await response.text();
+      console.log('Raw response text:', responseText);
+
+      let data;
+      try {
+        data = JSON.parse(responseText);
+      } catch (parseError) {
+        console.error('Failed to parse JSON:', parseError);
+        return {
+          verified: false,
+          message: `Invalid response from server: ${responseText.substring(0, 100)}...`
+        };
+      }
 
       if (!data || data.status !== 'success') {
         return {
